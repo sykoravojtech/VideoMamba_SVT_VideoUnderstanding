@@ -52,15 +52,14 @@ goal
 desc
 
 ## Repository structure
-- **constants** (include constants that are used in multiple files)
+- **assets** (media files for example, display)
 - **data**
   - **raw** (original downloaded datasets)
-  - **final** (processed datasets from data/raw)
+  - **processed** (processed datasets from data/raw)
 - **doc** (LaTeX code for the report)
   - **fig** (code for generating images and those images used in the LaTeX report)
-- **exp** (experiments)
-- **scripts** (general data preprocessing code)
-- **src** (general functions)
+- **runs** (experiment log and saved weights)
+- **src** (core modules)
 
 
 ## How to run   
