@@ -66,14 +66,18 @@ desc
 ## How to run   
 First, install dependencies   
 ```bash
+# install pytorchvideo
+git clone https://github.com/facebookresearch/pytorchvideo
+cd pytorchvideo
+pip install -v -e .
+cd ..
+
 # clone project   
 git clone [github_link]
 
 # install project   
 cd [repo_name]
-pip install -e .   
 pip install -r requirements.txt
-
 ```
 
 ## License
