@@ -10,6 +10,7 @@ import wandb
 
 from src.models import create_model
 from src.datasets import create_dataset, classification_collate_fn
+from src.utils.general import set_deterministic
 
 parser = argparse.ArgumentParser(description="Train a video model")
 parser.add_argument("--config", help="The config file", 
@@ -23,6 +24,9 @@ def train():
     # Load config
     config = CfgNode.load_yaml_with_base(args.config)
     config = CfgNode(config)
+
+    # make reproducible
+    set_deterministic(config.SEED)
 
     # Wandb init
     wandb.login(key=config.WANDB_KEY)
