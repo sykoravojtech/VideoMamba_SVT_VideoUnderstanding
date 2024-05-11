@@ -20,6 +20,8 @@ class ModelAbstract(abc.ABC, LightningModule):
         if self.config.TRAIN.FREEZE_ENCODER:
             free_subnet(self.encoder)
         self.head = self.create_head()
+        # save hyper-parameters to self.hparamsm auto-logged by wandb
+        self.save_hyperparameters()
         self.loss_func = self.create_loss_function()
         self.training_step_outputs = []
         self.validation_step_outputs = []
@@ -38,9 +40,7 @@ class ModelAbstract(abc.ABC, LightningModule):
 
     def forward(self, X: torch.Tensor, *args: Any, **kwargs: Any) -> torch.Tensor:
         features = self.encoder(X)
-        print("feature shape:", features.shape)
         y_pred = self.head(features)
-        print('head out shape:', y_pred.shape)
         return y_pred
 
     def compute_loss(self, y_pred, y):
@@ -49,11 +49,9 @@ class ModelAbstract(abc.ABC, LightningModule):
     def training_step(self, batch: Tuple, batch_idx) -> torch.Tensor:
         X, y = batch
         y_pred = self(X)
-        # print('y shape:', y.shape)
-        # print('y_pred:', y_pred.shape)
         loss = self.compute_loss(y_pred, y)
         self.log("train_loss", loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
-        self.training_step_outputs.append({'y_pred': y_pred, 'y_true':y})
+        self.training_step_outputs.append({'preds': y_pred, 'labels':y})
         return loss
     
     def validation_step(self, batch, batch_idx):
@@ -61,7 +59,7 @@ class ModelAbstract(abc.ABC, LightningModule):
         y_pred = self(X)
         val_loss = self.compute_loss(y_pred, y)
         self.log("val_loss", val_loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
-        self.validation_step_outputs.append(y_pred)
+        self.validation_step_outputs.append({'preds': y_pred, 'labels':y})
 
     @abc.abstractmethod
     def compute_metrics(self, *args: Any, **kwargs: Any):

@@ -22,8 +22,9 @@ class VideoClassificationModel(ModelAbstract):
         return nn.CrossEntropyLoss()
             
     def compute_metrics(self, outputs):
-        all_probas = np.concatenate([out['preds'].detach().cpu().numpy() for out in outputs])
-        all_labels = np.concatenate([out['labels'].detach().cpu().numpy() for out in outputs])
-        all_preds = np.argmax(all_probas, axis=1)
-        acc = float(self.acc_calculator(y_true=all_labels, y_pred=all_preds))
+        all_probas = torch.cat([out['preds'].detach().cpu() for out in outputs])
+        all_labels = torch.cat([out['labels'].detach().cpu() for out in outputs])
+        # print('cat shape:', all_probas.shape, all_labels.shape)
+        all_preds = torch.argmax(all_probas, axis=1)
+        acc = float(self.acc_calculator(all_preds, all_labels))
         return {'accuracy': acc}

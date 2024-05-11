@@ -164,3 +164,6 @@ checkpoints/*
 !checkpoints/README.md
 data/raw/*
 data/processed/*
+runs/*
+pytorchvideo
+wandb

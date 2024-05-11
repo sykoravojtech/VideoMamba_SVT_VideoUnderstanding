@@ -2,12 +2,11 @@ import os
 
 import torch
 from torch.utils.data import DataLoader
-
 from fvcore.common.config import CfgNode
-
 from lightning import Trainer
-from lightning.pytorch.loggers import CometLogger
+from lightning.pytorch.loggers import WandbLogger
 from lightning.pytorch.callbacks import LearningRateMonitor, ModelCheckpoint
+import wandb
 
 from src.models import create_model
 from src.datasets import create_dataset, classification_collate_fn
@@ -18,6 +17,11 @@ def train():
     # config = CfgNode()
     config = CfgNode.load_yaml_with_base(CONFIG_FILE)
     config = CfgNode(config)
+
+    wandb.login(key=config.WANDB_KEY)
+    wandb.init(project=config.PROJECT_NAME,
+                name=config.EXPERIMENT,
+                group=config.MODEL.TYPE)
 
     dataset = create_dataset(config)
     train_dataset = dataset.get_train_dataset()
@@ -33,10 +37,9 @@ def train():
                                                collate_fn=classification_collate_fn)
     lit_module = create_model(config)
     
-    output_dir = config.OUTPUT_DIR
-    logger = CometLogger(api_key=config.TRAIN.COMET_KEY, project_name=config.PROJECT_NAME,
-                     experiment_name=output_dir.split('/')[-1])
-    lr_monitor = LearningRateMonitor(logging_interval='epoch')
+    output_dir = os.path.join(config.OUTPUT_DIR, config.EXPERIMENT)
+    wandb_logger = WandbLogger(project=config.PROJECT_NAME)
+    lr_monitor = LearningRateMonitor(logging_interval='step')
 
     checkpointer = ModelCheckpoint(
          dirpath=os.path.join(output_dir,),
@@ -49,7 +52,7 @@ def train():
     trainer = Trainer(default_root_dir=output_dir, precision=16, max_epochs=config.TRAIN.NUM_EPOCHS,
                      check_val_every_n_epoch=1, enable_checkpointing=True,
                      log_every_n_steps=config.TRAIN.LOG_STEPS,
-                     logger=logger,
+                     logger=wandb_logger,
                      callbacks=[lr_monitor, checkpointer],
                      accelerator=config.TRAIN.ACCELERATOR, devices=config.TRAIN.DEVICES)
     trainer.fit(model=lit_module, train_dataloaders=train_loader, val_dataloaders=valid_loader)
