@@ -7,24 +7,29 @@ from torch import nn
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import CosineAnnealingLR
 
-import lightning as L
-import transformers
+from lightning import LightningModule
 
-class ModelAbstract(abc.ABC, L.LightningModule):
+from ..utils.general import free_subnet
+
+class ModelAbstract(abc.ABC, LightningModule):
     """Define abstract method for the models"""
     def __init__(self, config) -> None:
         super().__init__()
         self.config = config
         self.encoder = self.create_encoder()
-        self.downstream_head = self.create_downstream_head()
-        self.loss_funct = self.create_loss_function()
+        if self.config.TRAIN.FREEZE_ENCODER:
+            free_subnet(self.encoder)
+        self.head = self.create_head()
+        self.loss_func = self.create_loss_function()
+        self.training_step_outputs = []
+        self.validation_step_outputs = []
 
     @abc.abstractmethod
     def create_encoder(self) -> nn.Module:
         pass
 
     @abc.abstractmethod
-    def create_downstream_head(self) -> nn.Module:
+    def create_head(self) -> nn.Module:
         pass
 
     @abc.abstractmethod
@@ -33,49 +38,56 @@ class ModelAbstract(abc.ABC, L.LightningModule):
 
     def forward(self, X: torch.Tensor, *args: Any, **kwargs: Any) -> torch.Tensor:
         features = self.encoder(X)
-        y_pred = self.downstream_head(features)
+        print("feature shape:", features.shape)
+        y_pred = self.head(features)
+        print('head out shape:', y_pred.shape)
         return y_pred
 
     def compute_loss(self, y_pred, y):
-        return self.criterion(y_pred, y)
+        return self.loss_func(y_pred, y)
 
-    def training_step(self, batch: Tuple, *args: Any, **kwargs: Any) -> None:
+    def training_step(self, batch: Tuple, batch_idx) -> torch.Tensor:
         X, y = batch
         y_pred = self(X)
+        # print('y shape:', y.shape)
+        # print('y_pred:', y_pred.shape)
         loss = self.compute_loss(y_pred, y)
+        self.log("train_loss", loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        self.training_step_outputs.append({'y_pred': y_pred, 'y_true':y})
         return loss
     
     def validation_step(self, batch, batch_idx):
         X, y = batch
         y_pred = self(X)
         val_loss = self.compute_loss(y_pred, y)
-        self.log("val_loss", val_loss)
+        self.log("val_loss", val_loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        self.validation_step_outputs.append(y_pred)
 
     @abc.abstractmethod
     def compute_metrics(self, *args: Any, **kwargs: Any):
-        return dict()
+       return dict()
 
     def log_metrics(self, metric_dict, phase='train'):
-        
         for k, v in metric_dict.items():
-            self.log(f'train_{k}', v)
+            self.log(f'{phase}_{k}', v)
 
-    def training_epoch_end(self, training_step_outputs):
-        metric_dict = self.compute_metrics(training_step_outputs)
+    def on_train_epoch_end(self):
+        metric_dict = self.compute_metrics(self.training_step_outputs)
         self.log_metrics(metric_dict, phase='train')
+        self.training_step_outputs.clear()  # free memory
         
-    def validation_epoch_end(self, validation_step_outputs):
-        metric_dict = self.compute_metrics(validation_step_outputs)
+    def on_validation_epoch_end(self):
+        metric_dict = self.compute_metrics(self.validation_step_outputs)
         self.log_metrics(metric_dict, phase='val')
+        self.validation_step_outputs.clear()  # free memory
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
-        
-        optimizer = AdamW(self.backbone.parameters(), lr=self.cfg.init_lr, eps=self.cfg.eps, betas=self.cfg.betas)
-        num_train_steps = int(self.cfg.num_train_examples / self.cfg.batch_size * self.cfg.epochs)
+        optimizer = AdamW(self.head.parameters(), lr=self.config.TRAIN.OPTIM.INIT_LEARNING_RATE, 
+                        eps=self.config.TRAIN.OPTIM.EPS, betas=self.config.TRAIN.OPTIM.BETAS)
 
         # Defining LR SCheduler
-        lr_scheduler = CosineAnnealingLR(optimizer, T_max=num_train_steps, eta_min=self.cfg.min_lr)
+        lr_scheduler = CosineAnnealingLR(optimizer, T_max=self.config.TRAIN.OPTIM.MAX_LR_STEPS,
+                                        eta_min=self.config.TRAIN.OPTIM.MIN_LEARNING_RATE)
 
         return {
             "optimizer": optimizer,

@@ -2,7 +2,7 @@ import abc
 
 from torch import nn
 
-class DownstreamHeadAbstract(abc.ABC, nn.Module):
+class HeadAbstract(abc.ABC, nn.Module):
     def __init__(self) -> None:
         super().__init__()
 
