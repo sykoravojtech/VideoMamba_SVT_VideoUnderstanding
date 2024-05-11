@@ -1,5 +1,6 @@
 import abc
 
+import torch
 from torch import nn
 
 class EncoderAbstract(abc.ABC, nn.Module):
@@ -7,6 +8,6 @@ class EncoderAbstract(abc.ABC, nn.Module):
         super().__init__()
 
     @abc.abstractmethod
-    def forward(self, X, y):
+    def forward(self, X: torch.Tensor, y: torch.Tensor):
         return X
 

@@ -1,15 +1,18 @@
-import torch
+import argparse
+
 from fvcore.common.config import CfgNode
 
-from src.models import create_model
 from src.datasets import create_dataset
 from src.utils.visualizations import investigate_video, display_gif
 
-CONFIG_FILE = 'src/config/cls_svt_s224_f8.yaml'
+parser = argparse.ArgumentParser(description="Train a video model")
+parser.add_argument("--config", help="The config file", 
+                        default="src/config/cls_svt_ucf101_s224_f8_exp0.yaml")
+args = parser.parse_args()
 
-def train():
-    # config = CfgNode()
-    config = CfgNode.load_yaml_with_base(CONFIG_FILE)
+def vis():
+    """Visualize one sample of training data"""
+    config = CfgNode.load_yaml_with_base(args.config)
     config = CfgNode(config)
 
     dataset = create_dataset(config)
@@ -20,7 +23,9 @@ def train():
     print(len(dataset.get_id2label()))
 
     video_tensor = sample_video["video"]
-    display_gif(video_tensor, "assets/sample_ufc101.gif", config.DATA.MEAN, config.DATA.STD)
+    save_path =  "assets/sample_ufc101.gif"
+    print("Save sample to:", save_path)
+    display_gif(video_tensor, save_path, config.DATA.MEAN, config.DATA.STD)
 
 if __name__ == '__main__':
-    train()
+    vis()

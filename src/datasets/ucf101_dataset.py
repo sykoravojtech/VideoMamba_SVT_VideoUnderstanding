@@ -1,13 +1,16 @@
 import os
 import pathlib
-import pytorchvideo.data
+from typing import Dict
+
 from torch.utils.data import Dataset
+from fvcore.common.config import CfgNode
+import pytorchvideo.data
 
 from .dataset_abstract import DatasetAbstract
 from .transformations import get_train_transforms, get_val_transforms
 
 class UFC101Dataset(DatasetAbstract):
-    def __init__(self, config) -> None:
+    def __init__(self, config: CfgNode) -> None:
         super().__init__()
         self.config = config
         self.dataset_root_path = pathlib.Path(config.DATA.ROOT_PATH)
@@ -23,8 +26,7 @@ class UFC101Dataset(DatasetAbstract):
         self.val_transforms = get_val_transforms(config)
 
 
-    def get_all_vid_paths(self, dataset_root_path):
-        print(dataset_root_path)
+    def get_all_vid_paths(self, dataset_root_path: pathlib.Path):
         dataset_root_path = pathlib.Path(dataset_root_path)
         video_count_train = len(list(dataset_root_path.glob("train/*/*.avi")))
         video_count_val = len(list(dataset_root_path.glob("val/*/*.avi")))
@@ -58,5 +60,5 @@ class UFC101Dataset(DatasetAbstract):
         )   
         return val_dataset
 
-    def get_id2label(self):
+    def get_id2label(self) -> Dict:
         return self.id2label

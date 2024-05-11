@@ -1,19 +1,18 @@
-
 import abc
-from typing import Any, Tuple
+from typing import Tuple, Dict
 
 import torch
 from torch import nn
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import CosineAnnealingLR
-
+from fvcore.common.config import CfgNode
 from lightning import LightningModule
 
 from ..utils.general import free_subnet
 
 class ModelAbstract(abc.ABC, LightningModule):
-    """Define abstract method for the models"""
-    def __init__(self, config) -> None:
+    """Define common methods and abstract methods for the all sub-class models"""
+    def __init__(self, config:CfgNode) -> None:
         super().__init__()
         self.config = config
         self.encoder = self.create_encoder()
@@ -38,15 +37,15 @@ class ModelAbstract(abc.ABC, LightningModule):
     def create_loss_function(self) -> nn.Module:
         pass
 
-    def forward(self, X: torch.Tensor, *args: Any, **kwargs: Any) -> torch.Tensor:
+    def forward(self, X: torch.Tensor) -> torch.Tensor:
         features = self.encoder(X)
         y_pred = self.head(features)
         return y_pred
 
-    def compute_loss(self, y_pred, y):
+    def compute_loss(self, y_pred:torch.Tensor, y:torch.Tensor) -> torch.Tensor:
         return self.loss_func(y_pred, y)
 
-    def training_step(self, batch: Tuple, batch_idx) -> torch.Tensor:
+    def training_step(self, batch: Tuple) -> torch.Tensor:
         X, y = batch
         y_pred = self(X)
         loss = self.compute_loss(y_pred, y)
@@ -54,7 +53,7 @@ class ModelAbstract(abc.ABC, LightningModule):
         self.training_step_outputs.append({'preds': y_pred, 'labels':y})
         return loss
     
-    def validation_step(self, batch, batch_idx):
+    def validation_step(self, batch: Tuple):
         X, y = batch
         y_pred = self(X)
         val_loss = self.compute_loss(y_pred, y)
@@ -62,7 +61,7 @@ class ModelAbstract(abc.ABC, LightningModule):
         self.validation_step_outputs.append({'preds': y_pred, 'labels':y})
 
     @abc.abstractmethod
-    def compute_metrics(self, *args: Any, **kwargs: Any):
+    def compute_metrics(self, step_outputs) -> Dict:
        return dict()
 
     def log_metrics(self, metric_dict, phase='train'):

@@ -1,5 +1,6 @@
 import os
 
+from fvcore.common.config import CfgNode
 
 from pytorchvideo.transforms import (
     ApplyTransformToKey,
@@ -18,18 +19,7 @@ from torchvision.transforms import (
     Resize,
 )
 
-# mean = image_processor.image_mean
-# std = image_processor.image_std
-
-
-
-# if "shortest_edge" in image_processor.size:
-#     height = width = image_processor.size["shortest_edge"]
-# else:
-#     height = image_processor.size["height"]
-#     width = image_processor.size["width"]
-
-def get_train_transforms(config):
+def get_train_transforms(config: CfgNode):
     mean = config.DATA.MEAN
     std = config.DATA.STD
     resize_to = (config.DATA.TRAIN_CROP_SIZE, config.DATA.TRAIN_CROP_SIZE)
@@ -53,7 +43,7 @@ def get_train_transforms(config):
     return train_transforms
 
 
-def get_val_transforms(config):
+def get_val_transforms(config: CfgNode):
     resize_to = (config.DATA.TRAIN_CROP_SIZE, config.DATA.TRAIN_CROP_SIZE)
     mean = config.DATA.MEAN
     std = config.DATA.STD

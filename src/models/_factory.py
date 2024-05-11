@@ -1,6 +1,12 @@
-from .classification_model import VideoClassificationModel
+from fvcore.common.config import CfgNode
 
-def create_model(config):
+from .classification_model import VideoClassificationModel
+from .captioning_model import VideoCaptioningnModel
+
+def create_model(config: CfgNode):
     model_type = config.MODEL.TYPE
     if(model_type == 'classification'):
         return VideoClassificationModel(config)
+    if(model_type == 'captioning'):
+        return VideoCaptioningnModel(config)
+    raise NotImplementedError(f'{model_type} is not implemented.')
