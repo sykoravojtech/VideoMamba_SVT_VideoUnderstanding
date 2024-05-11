@@ -9,7 +9,6 @@ class VideoTransformerEncoder(EncoderAbstract):
         super().__init__()
         self.config = config
         self.vit = get_vit_base_patch16_224(cfg=config, no_head=True)
-        vit = self.vit.embed_dim
         ckpt = torch.load(config.MODEL.ENCODER.PRETRAINED)
         renamed_checkpoint = {x[len("backbone."):]: y for x, y in ckpt.items() if x.startswith("backbone.")}
         msg = self.vit.load_state_dict(renamed_checkpoint, strict=False)
