@@ -64,7 +64,6 @@ desc
 
 
 ## How to run   
-First, install dependencies   
 ```bash
 # clone project   
 git clone https://github.com/sykoravojtech/PracticalML_2024.git
