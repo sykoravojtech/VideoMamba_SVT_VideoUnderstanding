@@ -8,6 +8,9 @@ from torch.optim.lr_scheduler import CosineAnnealingLR
 from fvcore.common.config import CfgNode
 from lightning import LightningModule
 
+from .encoders.encoder_abstract import EncoderAbstract
+from .heads.head_abstract import HeadAbstract
+
 from ..utils.general import free_subnet
 
 class ModelAbstract(abc.ABC, LightningModule):
@@ -26,11 +29,11 @@ class ModelAbstract(abc.ABC, LightningModule):
         self.validation_step_outputs = []
 
     @abc.abstractmethod
-    def create_encoder(self) -> nn.Module:
+    def create_encoder(self) -> EncoderAbstract:
         pass
 
     @abc.abstractmethod
-    def create_head(self) -> nn.Module:
+    def create_head(self) -> HeadAbstract:
         pass
 
     @abc.abstractmethod
