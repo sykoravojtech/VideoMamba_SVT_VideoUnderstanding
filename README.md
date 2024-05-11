@@ -67,10 +67,10 @@ desc
 First, install dependencies   
 ```bash
 # clone project   
-git clone [github_link]
+git clone https://github.com/sykoravojtech/PracticalML_2024.git
 
-# install project   
-cd [repo_name]
+# install dependencies   
+cd PracticalML_2024
 pip install -r requirements.txt
 
 # install pytorchvideo
@@ -92,6 +92,7 @@ python visualize_dataset.py
 # training
 python train.py
 ```
+Visualize training log at https://wandb.ai/PracticalML2024/PracticalML
 
 ## License
 Distributed under the MIT License. See `LICENSE` for more information.
