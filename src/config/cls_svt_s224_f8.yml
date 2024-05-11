@@ -1,7 +1,0 @@
-model_type: classification
-encoder:
-  type: VideoTransformer
-
-downstream_head:
-  type: FullyConnected
-  num_classes: 3
