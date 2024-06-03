@@ -1,0 +1,24 @@
+(TODO)
+
+Naming scheme:
+<task>_<backbone>_<dataset>[_???].yaml
+
+charades_dataset.py is the dataset loader. It provides methods to create
+pytorchvideo.data.Charades type objects for the training and validation
+data respectively.
+
+IMPORTANT: Pytorchvideo spec for the csv file format 
+doesn't match our data, see:
+https://pytorchvideo.readthedocs.io/en/latest/_modules/pytorchvideo/data/charades.html
+
+
+cls_svt_charades.yaml is a config file associated with charades_dataset.py.
+The following fields have noticably been altered from the default implementation:
+PROJECT_NAME
+EXPERIMENT
+WANDB_KEY
+NUM_CLASSES
+DATASET
+ROOT_PATH
+(todo) MEAN
+(todo) STD
