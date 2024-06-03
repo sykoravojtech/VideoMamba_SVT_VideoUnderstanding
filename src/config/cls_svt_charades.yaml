@@ -1,0 +1,44 @@
+PROJECT_NAME: PracticalML
+EXPERIMENT: cls_svt_charades
+OUTPUT_DIR: ./runs
+WANDB_KEY: 547d969d74fa2db0a0eb6a8b49490f5fddccfc04
+SEED: 42
+
+MODEL:
+  TYPE: classification
+  ENCODER:
+    TYPE: VideoTransformer
+    PRETRAINED: checkpoints/kinetics400_vitb_ssl.pth
+    HIDDEN_SIZE: 768
+    RETURN_ALL_HIDDEN: False
+
+  HEAD:
+    TYPE: MLP
+    LAYERS: [128,128]
+    NUM_CLASSES: 157
+
+DATA:
+  DATASET: charades
+  ROOT_PATH: data/raw/Charades
+  TRAIN_CROP_SIZE: 224
+  NUM_SAMPLED_FRAMES:  8
+  SAMPLE_RATE: 4
+  FPS: 30
+  MEAN: [0.45, 0.45, 0.45]  # TODO: Calculate per-pixel mean for Charades
+  STD: [0.225, 0.225, 0.225]  # TODO: Calculate per-pixel std for Charades
+  NUM_WORKERS: 4
+
+TRAIN:
+  FREEZE_ENCODER: True
+  NUM_EPOCHS: 10
+  BATCH_SIZE: 2
+  OPTIM:
+    TYPE: AdamW
+    INIT_LEARNING_RATE: 0.0001
+    MIN_LEARNING_RATE: 0.000001
+    EPS: 0.000001
+    BETAS: [0.9, 0.999]
+    MAX_LR_STEPS: 100
+  LOG_STEPS: 50
+  ACCELERATOR: gpu
+  DEVICES: 1
