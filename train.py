@@ -1,6 +1,7 @@
 import os
 import argparse
 
+import torch
 from torch.utils.data import DataLoader
 from fvcore.common.config import CfgNode
 from lightning import Trainer
@@ -64,12 +65,13 @@ def train():
     )
     
     # trainer
+    devices = config.TRAIN.DEVICES if torch.cuda.is_available() else 'cpu'
     trainer = Trainer(default_root_dir=output_dir, precision=16, max_epochs=config.TRAIN.NUM_EPOCHS,
                      check_val_every_n_epoch=1, enable_checkpointing=True,
                      log_every_n_steps=config.TRAIN.LOG_STEPS,
                      logger=wandb_logger,
                      callbacks=[lr_monitor, checkpointer],
-                     accelerator=config.TRAIN.ACCELERATOR, devices=config.TRAIN.DEVICES)
+                     accelerator=config.TRAIN.ACCELERATOR, devices=devices)
 
     # training
     trainer.fit(model=lit_module, train_dataloaders=train_loader, val_dataloaders=valid_loader)
