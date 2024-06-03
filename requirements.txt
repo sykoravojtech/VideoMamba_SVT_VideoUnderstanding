@@ -2,9 +2,10 @@ torch==2.3.0
 torchvision
 transformers==4.40.2
 einops==0.8.0
-pytorchvideo==0.1.5
 fvcore==0.1.5.post20221221
 imageio==2.34.1
 scikit-learn==1.4.2
 wget==3.2
 comet_ml==3.41.0
+wandb==0.17.0
+lightning==2.2.4
