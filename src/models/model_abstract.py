@@ -40,17 +40,25 @@ class ModelAbstract(abc.ABC, LightningModule):
     def create_loss_function(self) -> nn.Module:
         pass
 
-    def forward(self, X: torch.Tensor) -> torch.Tensor:
+    def forward(self, X: torch.Tensor, y: torch.Tensor | Dict[str, torch.Tensor] = None) -> torch.Tensor:
+        '''
+            Args:
+                X: video pixel tensor
+                y: target class (classification model) or a dictionary of {'input_ids', 'attention_mask' } (captioning model)
+            Returns:
+                logits: the output logits of the model
+        '''
         features = self.encoder(X)
-        y_pred = self.head(features)
+        print(features.shape)
+        y_pred = self.head(features, y)
         return y_pred
 
-    def compute_loss(self, y_pred:torch.Tensor, y:torch.Tensor) -> torch.Tensor:
+    def compute_loss(self, y_pred:torch.Tensor, y:torch.Tensor | Dict[str, torch.Tensor]) -> torch.Tensor:
         return self.loss_func(y_pred, y)
 
     def training_step(self, batch: Tuple) -> torch.Tensor:
         X, y = batch
-        y_pred = self(X)
+        y_pred = self(X, y)
         loss = self.compute_loss(y_pred, y)
         self.log("train_loss", loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         self.training_step_outputs.append({'preds': y_pred, 'labels':y})

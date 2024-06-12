@@ -31,7 +31,7 @@ class MLPHead(HeadAbstract):
         out_size = self.config.MODEL.HEAD.NUM_CLASSES
         self.classifier = nn.Linear(in_size, out_size)
 
-    def forward(self, X: torch.Tensor):
+    def forward(self, X: torch.Tensor, y: torch.Tensor = None):
         out = self.mlp(X)
         out = self.classifier(out)
         return out
