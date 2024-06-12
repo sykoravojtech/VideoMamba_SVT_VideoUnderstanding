@@ -209,11 +209,11 @@ class VisionMamba(nn.Module):
     def __init__(
             self, 
             img_size=224, 
-            patch_size=16, 
+            patch_size=16, # was 16 
             depth=24, 
             embed_dim=192, 
             channels=3, 
-            num_classes=1000,
+            num_classes=400,
             drop_rate=0.,
             drop_path_rate=0.1,
             ssm_cfg=None, 
@@ -224,8 +224,8 @@ class VisionMamba(nn.Module):
             residual_in_fp32=True,
             bimamba=True,
             # video
-            kernel_size=1, 
-            num_frames=8, 
+            kernel_size=1, # was 1
+            num_frames=16, # was 16
             fc_drop_rate=0., 
             device=None,
             dtype=None,
@@ -333,8 +333,11 @@ class VisionMamba(nn.Module):
 
         # temporal pos
         cls_tokens = x[:B, :1, :]
+        print(f"==> {x.shape=}")
         x = x[:, 1:]
+        print(f"==> {x.shape=}")
         x = rearrange(x, '(b t) n m -> (b n) t m', b=B, t=T)
+        print(f"==> {x.shape=} {self.temporal_pos_embedding.shape=}")
         x = x + self.temporal_pos_embedding
         x = rearrange(x, '(b n) t m -> b (t n) m', b=B, t=T)
         x = torch.cat((cls_tokens, x), dim=1)
@@ -402,7 +405,6 @@ def inflate_weight(weight_2d, time_dim, center=True):
 
 
 def load_state_dict(model, state_dict, center=True):
-    print('### Load state dict')
     state_dict_3d = model.state_dict()
     for k in state_dict.keys():
         if k in state_dict_3d.keys() and state_dict[k].shape != state_dict_3d[k].shape:
@@ -413,8 +415,8 @@ def load_state_dict(model, state_dict, center=True):
             time_dim = state_dict_3d[k].shape[2]
             state_dict[k] = inflate_weight(state_dict[k], time_dim, center=center)
     
-    # del state_dict['head.weight']
-    # del state_dict['head.bias']
+    del state_dict['head.weight']
+    del state_dict['head.bias']
     msg = model.load_state_dict(state_dict, strict=False)
     print(msg)
 
@@ -435,6 +437,7 @@ def videomamba_tiny(pretrained=False, **kwargs):
     if pretrained:
         state_dict = torch.load(_MODELS["videomamba_t16_k400"], map_location='cpu')
         load_state_dict(model, state_dict, center=True)
+        print(f'Pretrained weights loaded from {_MODELS["videomamba_t16_k400"]}')
     return model
 
 
@@ -452,9 +455,9 @@ def videomamba_small(pretrained=False, **kwargs):
     )
     model.default_cfg = _cfg()
     if pretrained:
-        print('load pretrained weights')
         state_dict = torch.load(_MODELS["videomamba_s16_k400"], map_location='cpu')
         load_state_dict(model, state_dict, center=True)
+        print(f'Pretrained weights loaded from {_MODELS["videomamba_s16_k400"]}')
     return model
 
 
@@ -472,9 +475,9 @@ def videomamba_middle(pretrained=False, **kwargs):
     )
     model.default_cfg = _cfg()
     if pretrained:
-        print('load pretrained weights')
         state_dict = torch.load(_MODELS["videomamba_m16_k400"], map_location='cpu')
         load_state_dict(model, state_dict, center=True)
+        print(f'Pretrained weights loaded from {_MODELS["videomamba_m16_k400"]}')
     return model
 
 
@@ -494,9 +497,9 @@ if __name__ == '__main__':
 
     # To evaluate GFLOPs, pleaset set `rms_norm=False` and `fused_add_norm=False`
 
-    # model = videomamba_tiny(pretrained=True, num_frames= 16, num_classes=400).cuda()
-    model = videomamba_small(pretrained=True, num_frames=16, num_classes=400).cuda()
-    # model = videomamba_middle(pretrained=True, num_frames=16, num_classes=400).cuda()
+    # model = videomamba_tiny(pretrained=True).cuda()
+    model = videomamba_small(pretrained=True).cuda()
+    # model = videomamba_middle(pretrained=True).cuda()
     
     # flops = FlopCountAnalysis(model, torch.rand(1, 3, num_frames, img_size, img_size).cuda())
     # s = time.time()
