@@ -49,7 +49,6 @@ class ModelAbstract(abc.ABC, LightningModule):
                 logits: the output logits of the model
         '''
         features = self.encoder(X)
-        print(features.shape)
         y_pred = self.head(features, y)
         return y_pred
 
@@ -66,7 +65,7 @@ class ModelAbstract(abc.ABC, LightningModule):
     
     def validation_step(self, batch: Tuple):
         X, y = batch
-        y_pred = self(X)
+        y_pred = self(X, y)
         val_loss = self.compute_loss(y_pred, y)
         self.log("val_loss", val_loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         self.validation_step_outputs.append({'preds': y_pred, 'labels':y})

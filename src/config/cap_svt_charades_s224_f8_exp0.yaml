@@ -1,5 +1,5 @@
 PROJECT_NAME: PracticalML
-EXPERIMENT: cls_svt_ucf101_s224_f8_exp0
+EXPERIMENT: cap_svt_charades_s224_f8_exp0
 OUTPUT_DIR: ./runs
 WANDB_KEY: 547d969d74fa2db0a0eb6a8b49490f5fddccfc04
 SEED: 42
@@ -15,27 +15,29 @@ MODEL:
   HEAD:
     TYPE: Generative
     LANGUAGE_MODEL: distilgpt2
-    LAYERS: [128, 128]
-    NUM_CLASSES: 10
+    MAX_TOKENS: 128
 
 DATA:
-  DATASET: ucf101
-  ROOT_PATH: data/raw/UCF101_subset
+  DATASET: charades_caption
+  ROOT_PATH: data/processed/Charades
+  TRAIN_CSV: Charades_v1_train_perframe_cap_ann.csv
+  VAL_CSV: Charades_v1_test_perframe_cap_ann.csv
   TRAIN_CROP_SIZE: 224
   NUM_SAMPLED_FRAMES: 8
-  SAMPLE_RATE: 4
-  FPS: 30
+  # SAMPLE_RATE: 4
+  # FPS: 30
+  CLIP_DURATION: 47
   MEAN: [0.45, 0.45, 0.45]
   STD: [0.225, 0.225, 0.225]
-  NUM_WORKERS: 4
+  NUM_WORKERS: 8
 
 TRAIN:
   FREEZE_ENCODER: True
-  NUM_EPOCHS: 10
-  BATCH_SIZE: 2
+  NUM_EPOCHS: 30
+  BATCH_SIZE: 4
   OPTIM:
     TYPE: AdamW
-    INIT_LEARNING_RATE: 0.0001
+    INIT_LEARNING_RATE: 0.00005
     MIN_LEARNING_RATE: 0.000001
     EPS: 0.000001
     BETAS: [0.9, 0.999]

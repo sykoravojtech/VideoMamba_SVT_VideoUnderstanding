@@ -17,10 +17,10 @@ class GenerativeHead(HeadAbstract):
         self.language_model = AutoModelForCausalLM.from_pretrained(model_name, config=lm_config)
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.tokenizer.pad_token = self.tokenizer.eos_token
-        self.device = torch.device(self.config.TRAIN.DEVICES if torch.cuda.is_available() else "cpu")
+        self.device = torch.device(self.config.TRAIN.DEVICES-1 if torch.cuda.is_available() else "cpu")
 
     def forward(self, enc_hidden: torch.Tensor, y: Dict[str, torch.Tensor]) -> torch.Tensor:
-        enc_hidden = enc_hidden.reshape(1, 1, -1)
+        enc_hidden = enc_hidden.unsqueeze(1) # make shape (bs x 1 x hidden_size)
         output = self.language_model(input_ids=y['input_ids'],
                                    encoder_hidden_states=enc_hidden,
                                    attention_mask=y['attention_mask'])
@@ -41,6 +41,8 @@ class GenerativeHead(HeadAbstract):
         input_ids = [torch.tensor([self.tokenizer.bos_token_id], device=self.device)]
         beam_logprobs: Optional[List[float]] = None
 
+        print(input_ids)
+
         def _get_beam_outputs(_input_ids: torch.Tensor) -> Tuple[List[torch.Tensor], torch.Tensor]:
             """Performs inference on the 'input_ids' Tensor, and collects the top
             'beam_size' results by score. Returns a list of output Tensors, and
@@ -48,6 +50,7 @@ class GenerativeHead(HeadAbstract):
             """
             outputs = self.language_model(input_ids=_input_ids.unsqueeze(0), 
                                           encoder_hidden_states=encoder_hidden_states)
+            # print(outputs.logits)
             logits: torch.Tensor = outputs.logits[0, -1]
             logprobs = F.log_softmax(logits, dim=-1)
 

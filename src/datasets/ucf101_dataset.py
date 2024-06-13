@@ -20,7 +20,8 @@ class UFC101Dataset(DatasetAbstract):
         self.label2id = {label: i for i, label in enumerate(self.class_labels)}
         self.id2label = {i: label for label, i in self.label2id.items()}
 
-        self.clip_duration = config.DATA.NUM_SAMPLED_FRAMES * config.DATA.SAMPLE_RATE / config.DATA.FPS
+        # self.clip_duration = config.DATA.NUM_SAMPLED_FRAMES * config.DATA.SAMPLE_RATE / config.DATA.FPS
+        self.clip_duration = config.DATA.CLIP_DURATION
 
         self.train_transforms = get_train_transforms(config)
         self.val_transforms = get_val_transforms(config)

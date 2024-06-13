@@ -43,7 +43,7 @@ class VideoCaptioningModel(ModelAbstract):
         return self.loss_func(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
             
 
-    def compute_metrics(self, y_pred:torch.Tensor, y:torch.Tensor) -> Dict[str, float]:
+    def compute_metrics(self, step_outputs) -> Dict[str, float]:
         return dict()
 
     def generate(self, X: torch.Tensor, max_len: int = 64, beam_size: int = 1) -> str:
