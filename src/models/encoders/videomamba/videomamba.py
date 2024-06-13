@@ -20,10 +20,10 @@ import math
 
 from transformers.modeling_outputs import BaseModelOutput
 
-from mamba_simple import Mamba
+from .mamba_simple import Mamba
 
 try:
-    from layernorm import RMSNorm, layer_norm_fn, rms_norm_fn
+    from .layernorm import RMSNorm, layer_norm_fn, rms_norm_fn
 except ImportError:
     print("RMSNorm, layer_norm_fn, rms_norm_fn = None, None, None")
     RMSNorm, layer_norm_fn, rms_norm_fn = None, None, None
@@ -333,11 +333,8 @@ class VisionMamba(nn.Module):
 
         # temporal pos
         cls_tokens = x[:B, :1, :]
-        print(f"==> {x.shape=}")
         x = x[:, 1:]
-        print(f"==> {x.shape=}")
         x = rearrange(x, '(b t) n m -> (b n) t m', b=B, t=T)
-        print(f"==> {x.shape=} {self.temporal_pos_embedding.shape=}")
         x = x + self.temporal_pos_embedding
         x = rearrange(x, '(b n) t m -> b (t n) m', b=B, t=T)
         x = torch.cat((cls_tokens, x), dim=1)
