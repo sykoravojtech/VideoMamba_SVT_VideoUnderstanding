@@ -23,9 +23,9 @@ DATA:
   TRAIN_CROP_SIZE: 224
   NUM_SAMPLED_FRAMES:  8
   SAMPLE_RATE: 4
-  FPS: 30
-  MEAN: [0.45, 0.45, 0.45]  # TODO: Calculate per-pixel mean for Charades
-  STD: [0.225, 0.225, 0.225]  # TODO: Calculate per-pixel std for Charades
+  FPS: 24
+  MEAN: [0.45, 0.45, 0.45]
+  STD: [0.225, 0.225, 0.225]
   NUM_WORKERS: 4
 
 TRAIN:
