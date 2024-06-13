@@ -9,7 +9,8 @@ DUMMY_1 = float('NaN')
 DUMMY_2 = float('NaN')
 
 def get_video_ids(path_to_frame_data):
-    """Returns video ids from the per-frame rgb data in a list, given the path to the data"""
+    """Returns video ids from the per-frame rgb data in a list,
+            given the path to the data"""
     return [d for d in os.listdir(path_to_frame_data)
             if os.path.isdir(os.path.join(path_to_frame_data, d))]
 
@@ -21,7 +22,8 @@ def get_frame_ids(vid_id, path_to_frame_data):
             if os.path.isfile(os.path.join(video_path, f))]
 
 def create_frame_anns(vid_ids, path_to_frame_data):
-
+    """Returns annotations with the desired frame paths,
+            given the path to the data and the full video ids"""
     frm_anns = []
     for vid_id in vid_ids:
         frm_ids = get_frame_ids(vid_id, path_to_frame_data)
@@ -47,7 +49,7 @@ for video_id in video_ids[:5]:
     frame_ids = get_frame_ids(video_id, PATH_TO_FRAME_DATA)
     print(f"Video ID: {video_id}, Frame IDs: {frame_ids[:5]}")
 
-# Example matching and print
+# Example per-frame path and annotation creation
 frame_anns= create_frame_anns(video_ids[:5], PATH_TO_FRAME_DATA)
 print("\nA few per-frame annotations:")
 for annotation in frame_anns[:10]:
