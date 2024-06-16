@@ -14,8 +14,8 @@ PATH_TO_CHARADES_ROOT = "./data/raw/Charades/"
 PATH_TO_FRAME_DATA = f"{PATH_TO_CHARADES_ROOT}/Charades_frames/"
 PATH_TO_VIDEO_ANNS = f"{PATH_TO_CHARADES_ROOT}/Charades_v1_train.csv"
 
-DUMMY_1 = float('NaN')  # placeholder for video_id, unused in the implementation
-DUMMY_2 = float('NaN')  # placeholder for frame_id, unused in the implementation
+DUMMY_1 = -1  # placeholder for video_id, unused in the implementation
+DUMMY_2 = -1  # placeholder for frame_id, unused in the implementation
 
 
 # Create the action labels csv file: convert action codes to integer labels.
@@ -64,17 +64,14 @@ def get_label(str_labels):
         int_labels.append(str(ACTION_ID_TO_LABEL[action_id]))
     return "," .join(int_labels)
 
-def create_frame_anns(vid_anns, vid_ids, path_to_frame_data):
+def create_frame_anns(vid_anns, path_to_frame_data):
     """Returns annotations with the desired frame paths,
             given the path to the data and the full video ids"""
     frm_anns = []
-    for vid_id in vid_ids:
+    for _, anns_row in vid_anns.iterrows():
+        vid_id = anns_row['id']
         frm_ids = get_frame_ids(vid_id, path_to_frame_data)
-        vid_actions = vid_anns.loc[vid_anns['id'] == vid_id, 'actions']  # not terribly efficient but intuitive
-        if not vid_actions.empty:
-            vid_labels = get_label(vid_actions.iloc[0])  # iloc[0] because we only want the action string
-        else:
-            vid_labels = np.nan
+        vid_labels = get_label(anns_row['actions']) if pd.notnull(anns_row['actions']) else ''
 
         for frm_id in frm_ids:
             frm_path = os.path.join(path_to_frame_data, vid_id, f"{frm_id}.jpg")
@@ -128,14 +125,12 @@ for annotation in demo_frame_anns[-3:]:
 """
 
 
-# Finally, time to create the true dataframe we will use.
-print("Gathering video ids...")
-video_ids = get_video_ids(PATH_TO_FRAME_DATA)
+# Finally, it's time to create the true dataframe we will use.
 print("Creating per-frame annotations (this may take a while)...")
-frame_anns = create_frame_anns(video_anns, video_ids, PATH_TO_FRAME_DATA)
+frame_anns = create_frame_anns(video_anns, PATH_TO_FRAME_DATA)
 
 print("Converting to dataframe...")
-frame_anns_df = pd.DataFrame(frame_anns, columns=['original_vido_id', 'video_id', 
+frame_anns_df = pd.DataFrame(frame_anns, columns=['original_vido_id', 'video_id',
                                                   'frame_id', 'path', 'labels'])
 # print("\nHead of the converted per-frame annotations")
 # print(frame_anns_df.head())
