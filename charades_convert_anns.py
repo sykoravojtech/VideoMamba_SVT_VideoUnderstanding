@@ -1,12 +1,45 @@
 """Use os for IO"""
 import os
 import pandas as pd
-# import numpy as np
+import numpy as np
 
-PATH_TO_FRAME_DATA = "/media/lav/Information Ingester/Datasets/Charades_v1_rgb/Charades_v1_rgb/"
-PATH_TO_VIDEO_ANNS = "./data/raw/Charades/Charades_v1_train.csv"
-DUMMY_1 = float('NaN')
-DUMMY_2 = float('NaN')
+"""
+This script takes charades video annotations from ../Charades/Charades_v1_train.csv 
+and frame data from ../Charades/Charades_frames/ and extrapolates per-frame
+annotations with per-frame video labels. The resulting annotations are stored in
+../Charades/Charades_per-frame_annotations.csv
+"""
+
+PATH_TO_CHARADES_ROOT = "./data/raw/Charades/"
+PATH_TO_FRAME_DATA = f"{PATH_TO_CHARADES_ROOT}/Charades_frames/"
+PATH_TO_VIDEO_ANNS = f"{PATH_TO_CHARADES_ROOT}/Charades_v1_train.csv"
+
+DUMMY_1 = float('NaN')  # placeholder for video_id, unused in the implementation
+DUMMY_2 = float('NaN')  # placeholder for frame_id, unused in the implementation
+
+
+# Create the action labels csv file: convert action codes to integer labels.
+# Save to: .../Charades/Charades_v1_classes_new_map.csv
+ACTION_TXT = f'{PATH_TO_CHARADES_ROOT}/Charades_v1_classes.txt'
+
+action_ids = []
+actions = []
+for row in open(ACTION_TXT):
+    row = row.split(' ')
+    action_ids.append(row[0])
+    actions.append(' '.join(row[1:]).strip())
+    # break
+
+action_df = pd.DataFrame({'action_id': action_ids, 'action': actions})
+action_df['label'] = np.arange(len(action_df))
+action_df.to_csv(f'{PATH_TO_CHARADES_ROOT}/Charades_v1_classes_new_map.csv', index=False)
+
+# Get video annotations
+video_anns = pd.read_csv(PATH_TO_VIDEO_ANNS)
+
+# Create supporting dict to convert action codes to integer labels
+ACTION_ID_TO_LABEL = action_df.set_index('action_id')['label'].to_dict()
+
 
 def get_video_ids(path_to_frame_data):
     """Returns video ids from the per-frame rgb data in a list,
@@ -21,39 +54,91 @@ def get_frame_ids(vid_id, path_to_frame_data):
     return [os.path.splitext(f)[0] for f in os.listdir(video_path)
             if os.path.isfile(os.path.join(video_path, f))]
 
-def create_frame_anns(vid_ids, path_to_frame_data):
+def get_label(str_labels):
+    '''Convert a sequence of (start time, end time, action id) to a sequence of integer labels.'''
+    int_labels = []
+    if pd.isnull(str_labels):
+        return ''
+    for item in str_labels.split(';'):
+        action_id = item.split(' ')[0]
+        int_labels.append(str(ACTION_ID_TO_LABEL[action_id]))
+    return "," .join(int_labels)
+
+def create_frame_anns(vid_anns, vid_ids, path_to_frame_data):
     """Returns annotations with the desired frame paths,
             given the path to the data and the full video ids"""
     frm_anns = []
     for vid_id in vid_ids:
         frm_ids = get_frame_ids(vid_id, path_to_frame_data)
+        vid_actions = vid_anns.loc[vid_anns['id'] == vid_id, 'actions']  # not terribly efficient but intuitive
+        if not vid_actions.empty:
+            vid_labels = get_label(vid_actions.iloc[0])  # iloc[0] because we only want the action string
+        else:
+            vid_labels = np.nan
+
         for frm_id in frm_ids:
             frm_path = os.path.join(path_to_frame_data, vid_id, f"{frm_id}.jpg")
-            ann_entry = (vid_id, DUMMY_1, DUMMY_2, frm_path)
+            ann_entry = (vid_id, DUMMY_1, DUMMY_2, frm_path, vid_labels)
             frm_anns.append(ann_entry)
     return frm_anns
 
-# Example load and print
-video_anns = pd.read_csv(PATH_TO_VIDEO_ANNS)
+
+"""
+The following commented lines are strictly intended for demonstration purposes.
+
+
+# Example for action mapping
+print("\nA few mappings from the action to ID supporting dict:")
+print(dict(list(ACTION_ID_TO_LABEL.items())[:5]))
+
+
+print("\nA few action class mappings to integer labels:")
+print(action_df.head())
+
+# Example load and print of video anns
 print("\nFirst few lines of the video annotations:")
 print(video_anns.head())
 
-# Example crawl and print
+print("\n A few actions in label format:")
+for i in range(5):
+    out = get_label(video_anns.head()['actions'].iloc[i])
+    print(out if out!="" else "(No action class label found)")
+
+
+# Example crawl of video ids and print
 video_ids = get_video_ids(PATH_TO_FRAME_DATA)
 print("\nA few video ids:")
 print(video_ids[:10])
 
-# Example crawl and print
+
+# Example crawl of frame paths and print
 print("\nA few frame ids for a few videos:")
 for video_id in video_ids[:5]:
     frame_ids = get_frame_ids(video_id, PATH_TO_FRAME_DATA)
     print(f"Video ID: {video_id}, Frame IDs: {frame_ids[:5]}")
 
-# Example per-frame path and annotation creation
-frame_anns= create_frame_anns(video_ids[:5], PATH_TO_FRAME_DATA)
-print("\nA few per-frame annotations:")
-for annotation in frame_anns[:10]:
-    print(annotation)
 
-# TODO Switch implementation to use pandas
-# TODO Add proper label from video annotations
+# Example per-frame path and annotation creation
+demo_frame_anns = create_frame_anns(video_anns, video_ids[:5], PATH_TO_FRAME_DATA)
+print("\nA few per-frame annotations from head and tail:")
+for annotation in demo_frame_anns[:3]:
+    print(annotation)
+for annotation in demo_frame_anns[-3:]:
+    print(annotation)
+"""
+
+
+# Finally, time to create the true dataframe we will use.
+print("Gathering video ids...")
+video_ids = get_video_ids(PATH_TO_FRAME_DATA)
+print("Creating per-frame annotations (this may take a while)...")
+frame_anns = create_frame_anns(video_anns, video_ids, PATH_TO_FRAME_DATA)
+
+print("Converting to dataframe...")
+frame_anns_df = pd.DataFrame(frame_anns, columns=['original_vido_id', 'video_id', 
+                                                  'frame_id', 'path', 'labels'])
+# print("\nHead of the converted per-frame annotations")
+# print(frame_anns_df.head())
+
+print("Saving annotations to csv...")
+frame_anns_df.to_csv(f'{PATH_TO_CHARADES_ROOT}/Charades_per-frame_annotations.csv', index=False)
