@@ -29,7 +29,7 @@ class VideoMambaEncoder(EncoderAbstract):
             "img_size": config.DATA.TRAIN_CROP_SIZE,
             "norm_epsilon": config.TRAIN.OPTIM.EPS,
             "device": "cuda" if config.TRAIN.ACCELERATOR == "gpu" else config.TRAIN.ACCELERATOR,
-            # "embed_dim": config.MODEL.ENCODER.HIDDEN_SIZE,
+            "embed_dim": config.MODEL.ENCODER.HIDDEN_SIZE,
         }
         if config.MODEL.ENCODER.MODEL_SIZE == "tiny":
             self.model = videomamba_tiny(**kwargs).cuda()

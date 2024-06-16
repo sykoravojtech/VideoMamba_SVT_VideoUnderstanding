@@ -322,24 +322,35 @@ class VisionMamba(nn.Module):
 
     def forward_features(self, x, inference_params=None):
         # x shape: B, C, T, H, W -> permute to B,T,C,H,W
+        # B=2, C=16, T=3, H=224, W=224 
+        # BATCH_SIZE, NUM_SAMPLED_FRAMES, T, TRAIN_CROP_SIZE, TRAIN_CROP_SIZE
         x = x.permute(0,2,1,3,4)
         x = self.patch_embed(x)
-        B, C, T, H, W = x.shape
-        x = x.permute(0, 2, 3, 4, 1).reshape(B * T, H * W, C)
+        B, C, T, H, W = x.shape # B=2, C=384, T=16, H=14, W=14 
+        print(f"#### FF: {B=} {C=} {T=} {H=} {W=}") 
+        x = x.permute(0, 2, 3, 4, 1).reshape(B * T, H * W, C) # B*T=2*16=32, H*W=14*14=196, C=384
+        print(f"#### FF: 1. {x.shape=}") # 32,196,384
 
         cls_token = self.cls_token.expand(x.shape[0], -1, -1)  # stole cls_tokens impl from Phil Wang, thanks
         x = torch.cat((cls_token, x), dim=1)
         x = x + self.pos_embed
+        print(f"#### FF: cls token {x.shape=}") # 32,197,384
 
         # temporal pos
         cls_tokens = x[:B, :1, :]
         x = x[:, 1:]
+        print(f"#### FF: 2. {x.shape=}") # 32,196,384
         x = rearrange(x, '(b t) n m -> (b n) t m', b=B, t=T)
+        print(f"#### FF: 3a. {x.shape=}") # 392,16,384
         x = x + self.temporal_pos_embedding
+        print(f"#### FF: 3b. {x.shape=}") # 392,16,384
         x = rearrange(x, '(b n) t m -> b (t n) m', b=B, t=T)
+        print(f"#### FF: 4. {x.shape=}") # 2,3136,384
         x = torch.cat((cls_tokens, x), dim=1)
+        print(f"#### FF: 5. {x.shape=}") # 2,3137,384
 
         x = self.pos_drop(x)
+        print(f"#### FF: 6. {x.shape=}") # 2,3137,384
 
         # mamba impl
         residual = None
@@ -350,10 +361,12 @@ class VisionMamba(nn.Module):
                     hidden_states, residual, inference_params=inference_params,
                     use_checkpoint=True
                 )
-            else:
+            else:  # WE GO HERE
+                print(f"FF: {idx=} {layer=}") # last out_shape = 384
                 hidden_states, residual = layer(
                     hidden_states, residual, inference_params=inference_params
                 )
+                print(f"####FF: {hidden_states.shape=} {residual.shape=}") # 2,3137,384 both
 
         if not self.fused_add_norm:
             if residual is None:
@@ -361,7 +374,8 @@ class VisionMamba(nn.Module):
             else:
                 residual = residual + self.drop_path(hidden_states)
             hidden_states = self.norm_f(residual.to(dtype=self.norm_f.weight.dtype))
-        else:
+        else: # WE GO HERE
+            print(f"FF: fused_add_norm")
             # Set prenorm=False here since we don't need the residual
             fused_add_norm_fn = rms_norm_fn if isinstance(self.norm_f, RMSNorm) else layer_norm_fn
             hidden_states = fused_add_norm_fn(
@@ -373,16 +387,23 @@ class VisionMamba(nn.Module):
                 prenorm=False,
                 residual_in_fp32=self.residual_in_fp32,
             )
+            print(f"####FF: {hidden_states.shape=} {residual.shape=}") # 2,3137,384 both
 
+        # print(f"#### FF: {hidden_states[:, 0, :]=}")
         # return only cls token
         return hidden_states[:, 0, :]
         # return hidden_states
 
     def forward(self, pixel_values, inference_params=None, output_attentions=None,
              output_hidden_states=None, return_dict=True):
+        # BATCH_SIZE, NUM_SAMPLED_FRAMES, C, TRAIN_CROP_SIZE, TRAIN_CROP_SIZE [2,16,3,224,224]
+        print(f"### FORWARD:\nx.shape={pixel_values.shape}")
+
         x = self.forward_features(pixel_values, inference_params)
-        # print("feature shape:", x.shape)
+        print(f"### FORWARD: forward features {x.shape=}") # BATCH_SIZE, HIDDEN_SIZE [2, 384]
+
         x = self.head(self.head_drop(x))
+        print(f"### FORWARD: head {x.shape=}") # BATCH_SIZE, NUM_CLASSES [2, 10]
         # x = self.fc(x)
         # x = BaseModelOutput(last_hidden_state=x)
         return x
@@ -423,7 +444,7 @@ def videomamba_tiny(pretrained=False, **kwargs):
     print("### videomamba_tiny")
     model = VisionMamba(
         patch_size=16, 
-        embed_dim=192, 
+        # embed_dim=192, 
         depth=24, 
         rms_norm=True, 
         residual_in_fp32=True, 
@@ -443,7 +464,7 @@ def videomamba_small(pretrained=False, **kwargs):
     print("### videomamba_small")
     model = VisionMamba(
         patch_size=16, 
-        embed_dim=384, 
+        # embed_dim=384, 
         depth=24, 
         rms_norm=True, 
         residual_in_fp32=True, 
@@ -463,7 +484,7 @@ def videomamba_middle(pretrained=False, **kwargs):
     print("### videomamba_middle")
     model = VisionMamba(
         patch_size=16, 
-        embed_dim=576, 
+        # embed_dim=576, 
         depth=32, 
         rms_norm=True, 
         residual_in_fp32=True, 
