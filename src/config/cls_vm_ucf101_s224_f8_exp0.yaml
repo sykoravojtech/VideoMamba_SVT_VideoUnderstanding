@@ -8,9 +8,9 @@ MODEL:
   TYPE: classification
   ENCODER:
     TYPE: VideoMamba
-    PRETRAINED: checkpoints/videomamba_s16_k400_f16_res224.pth
-    MODEL_SIZE: small
-    HIDDEN_SIZE: 384
+    PRETRAINED: True
+    MODEL_SIZE: middle # tiny, small, middle
+    HIDDEN_SIZE: 576   # 192,  384,   576
     RETURN_ALL_HIDDEN: False
 
   HEAD:
@@ -27,7 +27,7 @@ DATA:
   FPS: 30
   MEAN: [0.45, 0.45, 0.45]
   STD: [0.225, 0.225, 0.225]
-  NUM_WORKERS: 4
+  NUM_WORKERS: 3
 
 TRAIN:
   FREEZE_ENCODER: True

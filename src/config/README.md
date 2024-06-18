@@ -46,6 +46,11 @@ PRETRAINED: checkpoints/kinetics400_vitb_ssl.pth
 HIDDEN_SIZE: 768
 RETURN_ALL_HIDDEN: False
 
+## VideoMamba
+PRETRAINED: if this exists, the models know the path to the checkpoints
+MODEL_SIZE:  choose from   tiny, small, middle
+HIDDEN_SIZE: corresponding 192,  384,   576
+
 # HEADS
 ## MLP
 LAYERS: [128,128]

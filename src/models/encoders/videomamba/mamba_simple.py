@@ -1,16 +1,12 @@
 import math
-# from typing import Optional
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-# from torch import Tensor
 
 from einops import rearrange, repeat
 
-# TODO NEED TO ADD TO OUR REPO??
 try:
-    from causal_conv1d import causal_conv1d_fn, causal_conv1d_update
+    from .causal_conv1d import causal_conv1d_fn, causal_conv1d_update
 except ImportError:
     causal_conv1d_fn, causal_conv1d_update = None, None
 
@@ -20,12 +16,12 @@ except ImportError:
     selective_scan_fn, mamba_inner_fn, bimamba_inner_fn, mamba_inner_fn_no_out_proj = None, None, None, None
 
 try:
-    from mamba_ssm.ops.triton.selective_state_update import selective_state_update
+    from .selective_state_update import selective_state_update
 except ImportError:
     selective_state_update = None
 
 try:
-    from layernorm import RMSNorm, layer_norm_fn, rms_norm_fn
+    from .layernorm import RMSNorm, layer_norm_fn, rms_norm_fn
 except ImportError:
     print("RMSNorm, layer_norm_fn, rms_norm_fn = None, None, None")
     RMSNorm, layer_norm_fn, rms_norm_fn = None, None, None

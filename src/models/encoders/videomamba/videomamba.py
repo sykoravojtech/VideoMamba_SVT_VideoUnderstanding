@@ -14,7 +14,7 @@ from timm.models.registry import register_model
 from timm.models.layers import trunc_normal_
 
 from timm.models.layers import DropPath, to_2tuple
-from timm.models.vision_transformer import _load_weights
+# from timm.models.vision_transformer import _load_weights
 
 import math
 
@@ -35,7 +35,6 @@ except ImportError:
 
 current_dir = os.path.dirname(__file__) # for .py files
 MODEL_PATH = os.path.join(current_dir, "../../../../checkpoints/videomamba")
-print(f"{MODEL_PATH}")
 # https://huggingface.co/OpenGVLab/VideoMamba/tree/main
 _MODELS = {
     "videomamba_t16_k400": os.path.join(MODEL_PATH, "videomamba_t16_k400_f16_res224.pth"),
@@ -73,8 +72,7 @@ class Block(nn.Module):
             ), "Only LayerNorm and RMSNorm are supported for fused_add_norm"
 
     def forward(
-        self, hidden_states: Tensor, residual: Optional[Tensor] = None, inference_params=None,
-        use_checkpoint=False
+        self, hidden_states: Tensor, residual: Optional[Tensor] = None, inference_params=None
     ):
         r"""Pass the input through the encoder layer.
 
@@ -98,10 +96,7 @@ class Block(nn.Module):
                 residual_in_fp32=self.residual_in_fp32,
                 eps=self.norm.eps,
             )
-        if use_checkpoint:
-            hidden_states = checkpoint.checkpoint(self.mixer, hidden_states, inference_params)
-        else:
-            hidden_states = self.mixer(hidden_states, inference_params=inference_params)
+        hidden_states = self.mixer(hidden_states, inference_params=inference_params)
         return hidden_states, residual
 
     def allocate_inference_cache(self, batch_size, max_seqlen, dtype=None, **kwargs):
@@ -213,7 +208,7 @@ class VisionMamba(nn.Module):
             depth=24, 
             embed_dim=192, 
             channels=3, 
-            num_classes=400,
+            num_classes=0,
             drop_rate=0.,
             drop_path_rate=0.1,
             ssm_cfg=None, 
@@ -226,22 +221,14 @@ class VisionMamba(nn.Module):
             # video
             kernel_size=1, # was 1
             num_frames=16, # was 16
-            fc_drop_rate=0., 
+            # fc_drop_rate=0., 
             device=None,
             dtype=None,
-            # checkpoint
-            use_checkpoint=False,
-            checkpoint_num=0,
         ):
-        print(f'### VisionMamba')
         factory_kwargs = {"device": device, "dtype": dtype} # follow MambaLMHeadModel
         super().__init__()
         self.residual_in_fp32 = residual_in_fp32
         self.fused_add_norm = fused_add_norm
-        self.use_checkpoint = use_checkpoint # TODO remove
-        self.checkpoint_num = checkpoint_num # TODO remove
-        # print(f'Use checkpoint: {use_checkpoint}')
-        # print(f'Checkpoint number: {checkpoint_num}')
 
         # pretrain parameters
         self.num_classes = num_classes
@@ -258,9 +245,6 @@ class VisionMamba(nn.Module):
         self.pos_embed = nn.Parameter(torch.zeros(1, num_patches + 1, self.embed_dim))
         self.temporal_pos_embedding = nn.Parameter(torch.zeros(1, num_frames // kernel_size, embed_dim))
         self.pos_drop = nn.Dropout(p=drop_rate)
-
-        self.head_drop = nn.Dropout(fc_drop_rate) if fc_drop_rate > 0 else nn.Identity()
-        self.head = nn.Linear(self.num_features, num_classes) if num_classes > 0 else nn.Identity()
 
         dpr = [x.item() for x in torch.linspace(0, drop_path_rate, depth)]  # stochastic depth decay rule
         inter_dpr = [0.0] + dpr
@@ -287,11 +271,8 @@ class VisionMamba(nn.Module):
         # output head
         self.norm_f = (nn.LayerNorm if not rms_norm else RMSNorm)(embed_dim, eps=norm_epsilon, **factory_kwargs)
 
-        # self.fc = nn.Linear(self.num_features, 768)
-
         # original init
         self.apply(segm_init_weights)
-        self.head.apply(segm_init_weights)
         trunc_normal_(self.pos_embed, std=.02)
 
         # mamba init
@@ -309,64 +290,46 @@ class VisionMamba(nn.Module):
             for i, layer in enumerate(self.layers)
         }
 
-    @torch.jit.ignore
-    def no_weight_decay(self):
-        return {"pos_embed", "cls_token", "temporal_pos_embedding"}
+    # @torch.jit.ignore
+    # def no_weight_decay(self):
+    #     return {"pos_embed", "cls_token", "temporal_pos_embedding"}
     
     def get_num_layers(self):
         return len(self.layers)
 
-    @torch.jit.ignore()
-    def load_pretrained(self, checkpoint_path, prefix=""):
-        _load_weights(self, checkpoint_path, prefix)
+    # @torch.jit.ignore()
+    # def load_pretrained(self, checkpoint_path, prefix=""):
+    #     _load_weights(self, checkpoint_path, prefix)
 
     def forward_features(self, x, inference_params=None):
         # x shape: B, C, T, H, W -> permute to B,T,C,H,W
-        # B=2, C=16, T=3, H=224, W=224 
         # BATCH_SIZE, NUM_SAMPLED_FRAMES, T, TRAIN_CROP_SIZE, TRAIN_CROP_SIZE
         x = x.permute(0,2,1,3,4)
         x = self.patch_embed(x)
-        B, C, T, H, W = x.shape # B=2, C=384, T=16, H=14, W=14 
-        print(f"#### FF: {B=} {C=} {T=} {H=} {W=}") 
-        x = x.permute(0, 2, 3, 4, 1).reshape(B * T, H * W, C) # B*T=2*16=32, H*W=14*14=196, C=384
-        print(f"#### FF: 1. {x.shape=}") # 32,196,384
+        B, C, T, H, W = x.shape
+        x = x.permute(0, 2, 3, 4, 1).reshape(B * T, H * W, C)
 
         cls_token = self.cls_token.expand(x.shape[0], -1, -1)  # stole cls_tokens impl from Phil Wang, thanks
         x = torch.cat((cls_token, x), dim=1)
         x = x + self.pos_embed
-        print(f"#### FF: cls token {x.shape=}") # 32,197,384
 
         # temporal pos
         cls_tokens = x[:B, :1, :]
         x = x[:, 1:]
-        print(f"#### FF: 2. {x.shape=}") # 32,196,384
         x = rearrange(x, '(b t) n m -> (b n) t m', b=B, t=T)
-        print(f"#### FF: 3a. {x.shape=}") # 392,16,384
         x = x + self.temporal_pos_embedding
-        print(f"#### FF: 3b. {x.shape=}") # 392,16,384
         x = rearrange(x, '(b n) t m -> b (t n) m', b=B, t=T)
-        print(f"#### FF: 4. {x.shape=}") # 2,3136,384
         x = torch.cat((cls_tokens, x), dim=1)
-        print(f"#### FF: 5. {x.shape=}") # 2,3137,384
 
         x = self.pos_drop(x)
-        print(f"#### FF: 6. {x.shape=}") # 2,3137,384
 
         # mamba impl
         residual = None
         hidden_states = x
         for idx, layer in enumerate(self.layers):
-            if self.use_checkpoint and idx < self.checkpoint_num:
-                hidden_states, residual = layer(
-                    hidden_states, residual, inference_params=inference_params,
-                    use_checkpoint=True
-                )
-            else:  # WE GO HERE
-                print(f"FF: {idx=} {layer=}") # last out_shape = 384
-                hidden_states, residual = layer(
-                    hidden_states, residual, inference_params=inference_params
-                )
-                print(f"####FF: {hidden_states.shape=} {residual.shape=}") # 2,3137,384 both
+            hidden_states, residual = layer(
+                hidden_states, residual, inference_params=inference_params
+            )
 
         if not self.fused_add_norm:
             if residual is None:
@@ -374,8 +337,7 @@ class VisionMamba(nn.Module):
             else:
                 residual = residual + self.drop_path(hidden_states)
             hidden_states = self.norm_f(residual.to(dtype=self.norm_f.weight.dtype))
-        else: # WE GO HERE
-            print(f"FF: fused_add_norm")
+        else:
             # Set prenorm=False here since we don't need the residual
             fused_add_norm_fn = rms_norm_fn if isinstance(self.norm_f, RMSNorm) else layer_norm_fn
             hidden_states = fused_add_norm_fn(
@@ -387,9 +349,7 @@ class VisionMamba(nn.Module):
                 prenorm=False,
                 residual_in_fp32=self.residual_in_fp32,
             )
-            print(f"####FF: {hidden_states.shape=} {residual.shape=}") # 2,3137,384 both
 
-        # print(f"#### FF: {hidden_states[:, 0, :]=}")
         # return only cls token
         return hidden_states[:, 0, :]
         # return hidden_states
@@ -397,15 +357,7 @@ class VisionMamba(nn.Module):
     def forward(self, pixel_values, inference_params=None, output_attentions=None,
              output_hidden_states=None, return_dict=True):
         # BATCH_SIZE, NUM_SAMPLED_FRAMES, C, TRAIN_CROP_SIZE, TRAIN_CROP_SIZE [2,16,3,224,224]
-        print(f"### FORWARD:\nx.shape={pixel_values.shape}")
-
         x = self.forward_features(pixel_values, inference_params)
-        print(f"### FORWARD: forward features {x.shape=}") # BATCH_SIZE, HIDDEN_SIZE [2, 384]
-
-        x = self.head(self.head_drop(x))
-        print(f"### FORWARD: head {x.shape=}") # BATCH_SIZE, NUM_CLASSES [2, 10]
-        # x = self.fc(x)
-        # x = BaseModelOutput(last_hidden_state=x)
         return x
 
 
@@ -444,7 +396,7 @@ def videomamba_tiny(pretrained=False, **kwargs):
     print("### videomamba_tiny")
     model = VisionMamba(
         patch_size=16, 
-        # embed_dim=192, 
+        embed_dim=192, 
         depth=24, 
         rms_norm=True, 
         residual_in_fp32=True, 
@@ -464,7 +416,7 @@ def videomamba_small(pretrained=False, **kwargs):
     print("### videomamba_small")
     model = VisionMamba(
         patch_size=16, 
-        # embed_dim=384, 
+        embed_dim=384, 
         depth=24, 
         rms_norm=True, 
         residual_in_fp32=True, 
@@ -484,7 +436,7 @@ def videomamba_middle(pretrained=False, **kwargs):
     print("### videomamba_middle")
     model = VisionMamba(
         patch_size=16, 
-        # embed_dim=576, 
+        embed_dim=576, 
         depth=32, 
         rms_norm=True, 
         residual_in_fp32=True, 
