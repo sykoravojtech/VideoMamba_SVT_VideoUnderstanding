@@ -42,7 +42,7 @@ class CharadesDataset(DatasetAbstract):
             clip_sampler=pytorchvideo.data.make_clip_sampler("uniform", self.clip_duration),
             video_path_prefix=str(self.videos_path),
             transform=self.val_transforms,
-        )   
+        )
         return val_dataset
 
     def get_id2label(self) -> Dict:
