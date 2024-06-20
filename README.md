@@ -76,13 +76,13 @@ git clone https://github.com/facebookresearch/pytorchvideo
 cd pytorchvideo
 pip install -v -e .
 cd ..
-rm -r pytorchvideo
 
 # download pretrained weights
 python download_weights.py
 
-# download UFC101 data (video classification)
-python download_data.py
+# download data
+python download_data.py -ufc
+python download_data.py -charades
 
 # visualize 1 sample of data, the result is saved in assets
 python visualize_dataset.py

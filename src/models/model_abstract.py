@@ -11,7 +11,7 @@ from lightning import LightningModule
 from .encoders.encoder_abstract import EncoderAbstract
 from .heads.head_abstract import HeadAbstract
 
-from ..utils.general import free_subnet
+from ..utils.general import freeze_subnet
 
 class ModelAbstract(abc.ABC, LightningModule):
     """Define common methods and abstract methods for the all sub-class models"""
@@ -20,7 +20,7 @@ class ModelAbstract(abc.ABC, LightningModule):
         self.config = config
         self.encoder = self.create_encoder()
         if self.config.TRAIN.FREEZE_ENCODER:
-            free_subnet(self.encoder)
+            freeze_subnet(self.encoder)
         self.head = self.create_head()
         # save hyper-parameters to self.hparamsm auto-logged by wandb
         self.save_hyperparameters()

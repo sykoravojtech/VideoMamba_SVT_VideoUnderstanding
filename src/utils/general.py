@@ -4,7 +4,7 @@ import random
 import torch
 import numpy as np
 
-def free_subnet(subnet):
+def freeze_subnet(subnet):
     for p in subnet.parameters():
         p.requires_grad = False
 
