@@ -1,11 +1,11 @@
 PROJECT_NAME: PracticalML
-EXPERIMENT: cap_svt_charades_s224_f8_exp0
+EXPERIMENT: cls_svt_charades_s224_f8_exp0
 OUTPUT_DIR: ./runs
 WANDB_KEY: 547d969d74fa2db0a0eb6a8b49490f5fddccfc04
 SEED: 42
 
 MODEL:
-  TYPE: captioning
+  TYPE: classification
   ENCODER:
     TYPE: VideoTransformer
     PRETRAINED: checkpoints/kinetics400_vitb_ssl.pth
@@ -13,29 +13,28 @@ MODEL:
     RETURN_ALL_HIDDEN: False
 
   HEAD:
-    TYPE: Generative
-    LANGUAGE_MODEL: distilgpt2
-    MAX_TOKENS: 128
+    TYPE: MLP
+    LAYERS: [128,128]
+    NUM_CLASSES: 157
 
 DATA:
-  DATASET: charades_caption
+  DATASET: charades_action_classification
   ROOT_PATH: data/raw/Charades
   TRAIN_CROP_SIZE: 224
-  NUM_SAMPLED_FRAMES: 8
-  # SAMPLE_RATE: 4
-  # FPS: 30
-  CLIP_DURATION: 47
+  NUM_SAMPLED_FRAMES:  10
+  SAMPLE_RATE: 60
+  FPS: 24
   MEAN: [0.45, 0.45, 0.45]
   STD: [0.225, 0.225, 0.225]
-  NUM_WORKERS: 8
+  NUM_WORKERS: 4
 
 TRAIN:
   FREEZE_ENCODER: True
-  NUM_EPOCHS: 30
-  BATCH_SIZE: 4
+  NUM_EPOCHS: 10
+  BATCH_SIZE: 2
   OPTIM:
     TYPE: AdamW
-    INIT_LEARNING_RATE: 0.00005
+    INIT_LEARNING_RATE: 0.0001
     MIN_LEARNING_RATE: 0.000001
     EPS: 0.000001
     BETAS: [0.9, 0.999]

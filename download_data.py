@@ -1,20 +1,27 @@
 import os
 import sys
-import tarfile
-import zipfile
-import requests
-import shutil
+import tarfile # for extracting tar files
+import zipfile # for unzipping files
+import requests # for downloading files
+import shutil # for moving files
 
 from argparse import ArgumentParser
 from huggingface_hub import hf_hub_download
-
+from tqdm import tqdm # for progress bar 
 
 def download_file(url, local_filename):
     with requests.get(url, stream=True) as r:
         r.raise_for_status()
+        total_size = int(r.headers.get('content-length', 0))
+        block_size = 1024  # 1 Kibibyte
+        t = tqdm(total=total_size, unit='iB', unit_scale=True) # progress bar
         with open(local_filename, 'wb') as f:
-            for chunk in r.iter_content(chunk_size=8192):
+            for chunk in r.iter_content(chunk_size=block_size):
+                t.update(len(chunk))
                 f.write(chunk)
+        t.close()
+        if total_size != 0 and t.n != total_size:
+            print("ERROR: Something went wrong")
     print(f'Download complete: {local_filename}')
 
 def unzip_file(zip_file_path, extract_to_path):
@@ -82,23 +89,31 @@ if __name__ == "__main__":
     args = get_args()
 
     if args.ucf:
-        print("Setting up UCF101 dataset...")
-        download_ucf101()
+        if os.path.exists("data/raw/UCF101_subset"):
+            print("UCF101 dataset already downloaded.")
+        else:
+            print("Setting up UCF101 dataset...")
+            download_ucf101()
+            print("UCF101 dataset setup complete.")
     
     if args.charades:
-        print("...Obtaining Charades annotations...")
-        download_url_dataset(
-            url = 'https://ai2-public-datasets.s3-us-west-2.amazonaws.com/charades/Charades.zip',
-            final_dir = "data/raw",
-            remove_zip = True)
+        if os.path.exists("data/raw/Charades/videos") and not os.listdir("data/raw/Charades/videos"): 
+            print("Charades dataset already downloaded.")
+        else:
+            print("...Obtaining Charades annotations...")
+            download_url_dataset(
+                url = 'https://ai2-public-datasets.s3-us-west-2.amazonaws.com/charades/Charades.zip',
+                final_dir = "data/raw",
+                remove_zip = True)
 
-        # If you have the zip file of the videos downloaded put it in "data/raw/Charades"
-        # That will make it not download again
-        print("...Obtaining Charades videos...")
-        download_url_dataset(
-            url = 'https://ai2-public-datasets.s3-us-west-2.amazonaws.com/charades/Charades_v1_480.zip',
-            final_dir = "data/raw/Charades",
-            remove_zip = False)
+            # If you have the zip file of the videos downloaded put it in "data/raw/Charades"
+            # That will make it not download again
+            print("...Obtaining Charades videos...")
+            download_url_dataset(
+                url = 'https://ai2-public-datasets.s3-us-west-2.amazonaws.com/charades/Charades_v1_480.zip',
+                final_dir = "data/raw/Charades",
+                remove_zip = False)
 
-        os.rename("data/raw/Charades/Charades_v1_480", "data/raw/Charades/videos")
+            os.rename("data/raw/Charades/Charades_v1_480", "data/raw/Charades/videos")
+            print("...Charades dataset setup complete...")
         

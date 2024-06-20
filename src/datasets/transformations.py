@@ -32,8 +32,7 @@ def get_train_transforms(config: CfgNode):
                         UniformTemporalSubsample(config.DATA.NUM_SAMPLED_FRAMES),
                         Lambda(lambda x: x / 255.0),
                         Normalize(mean, std),
-                        RandomShortSideScale(min_size=256, max_size=320),
-                        RandomCrop(resize_to),
+                        Resize(resize_to),
                         RandomHorizontalFlip(p=0.5),
                     ]
                 ),
