@@ -3,7 +3,7 @@ import imageio
 import numpy as np
 from IPython.display import Image
 
-def investigate_video(sample_video, id2label):
+def investigate_video(sample_video, id2label, label_field='label'):
     """Utility to investigate the keys present in a single video sample."""
     for k in sample_video:
         print(k)
@@ -11,7 +11,13 @@ def investigate_video(sample_video, id2label):
             print(k, sample_video["video"].shape)
         else:
             print(k, sample_video[k])
-    print(f"Video label: {id2label[sample_video[k]]}")
+    
+    labels = sample_video[label_field]
+    if type(labels) == list:
+        print(labels)
+        print(f"Video label: {[id2label[l] for l in labels]}")
+    elif type(labels) == int:
+        print(f"Video label: {id2label[labels]}")
 
 
 def unnormalize_img(img, mean, std):

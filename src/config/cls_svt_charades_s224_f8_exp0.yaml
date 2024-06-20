@@ -1,5 +1,5 @@
 PROJECT_NAME: PracticalML
-EXPERIMENT: cls_svt_charades
+EXPERIMENT: cls_svt_charades_s224_f8_exp0
 OUTPUT_DIR: ./runs
 WANDB_KEY: 547d969d74fa2db0a0eb6a8b49490f5fddccfc04
 SEED: 42
@@ -21,8 +21,8 @@ DATA:
   DATASET: charades
   ROOT_PATH: data/raw/Charades
   TRAIN_CROP_SIZE: 224
-  NUM_SAMPLED_FRAMES:  8
-  SAMPLE_RATE: 4
+  NUM_SAMPLED_FRAMES:  10
+  SAMPLE_RATE: 60
   FPS: 24
   MEAN: [0.45, 0.45, 0.45]
   STD: [0.225, 0.225, 0.225]

@@ -2,17 +2,17 @@
 import os
 import pandas as pd
 import numpy as np
+from tqdm.auto import tqdm
 
 """
-This script takes charades video annotations from ../Charades/Charades_v1_train.csv 
+This script takes charades video annotations from ../Charades/Charades_v1_{train/test}.csv 
 and frame data from ../Charades/Charades_frames/ and extrapolates per-frame
 annotations with per-frame video labels. The resulting annotations are stored in
-../Charades/Charades_per-frame_annotations.csv
+../Charades/Charades_per-frame_annotations_{train/test}.csv
 """
 
 PATH_TO_CHARADES_ROOT = "./data/raw/Charades/"
-PATH_TO_FRAME_DATA = f"{PATH_TO_CHARADES_ROOT}/Charades_frames/"
-PATH_TO_VIDEO_ANNS = f"{PATH_TO_CHARADES_ROOT}/Charades_v1_train.csv"
+PATH_TO_FRAME_DATA = f"./data/raw/Charades_frames/Charades_v1_rgb/"
 
 DUMMY_1 = -1  # placeholder for video_id, unused in the implementation
 DUMMY_2 = -1  # placeholder for frame_id, unused in the implementation
@@ -34,8 +34,7 @@ action_df = pd.DataFrame({'action_id': action_ids, 'action': actions})
 action_df['label'] = np.arange(len(action_df))
 action_df.to_csv(f'{PATH_TO_CHARADES_ROOT}/Charades_v1_classes_new_map.csv', index=False)
 
-# Get video annotations
-video_anns = pd.read_csv(PATH_TO_VIDEO_ANNS)
+
 
 # Create supporting dict to convert action codes to integer labels
 ACTION_ID_TO_LABEL = action_df.set_index('action_id')['label'].to_dict()
@@ -68,7 +67,7 @@ def create_frame_anns(vid_anns, path_to_frame_data):
     """Returns annotations with the desired frame paths,
             given the path to the data and the full video ids"""
     frm_anns = []
-    for _, anns_row in vid_anns.iterrows():
+    for _, anns_row in tqdm(vid_anns.iterrows(), total=len(vid_anns)):
         vid_id = anns_row['id']
         frm_ids = get_frame_ids(vid_id, path_to_frame_data)
         vid_labels = get_label(anns_row['actions']) if pd.notnull(anns_row['actions']) else ''
@@ -77,6 +76,8 @@ def create_frame_anns(vid_anns, path_to_frame_data):
             frm_path = os.path.join(path_to_frame_data, vid_id, f"{frm_id}.jpg")
             ann_entry = (vid_id, DUMMY_1, DUMMY_2, frm_path, vid_labels)
             frm_anns.append(ann_entry)
+        
+        break
     return frm_anns
 
 
@@ -124,16 +125,19 @@ for annotation in demo_frame_anns[-3:]:
     print(annotation)
 """
 
+for phase in ['train', 'test']:
+    # Get video annotations
+    video_anns = pd.read_csv(f"{PATH_TO_CHARADES_ROOT}/Charades_v1_{phase}.csv")
 
-# Finally, it's time to create the true dataframe we will use.
-print("Creating per-frame annotations (this may take a while)...")
-frame_anns = create_frame_anns(video_anns, PATH_TO_FRAME_DATA)
+    # Finally, it's time to create the true dataframe we will use.
+    print("Creating per-frame annotations (this may take a while)...")
+    frame_anns = create_frame_anns(video_anns, PATH_TO_FRAME_DATA)
 
-print("Converting to dataframe...")
-frame_anns_df = pd.DataFrame(frame_anns, columns=['original_vido_id', 'video_id',
-                                                  'frame_id', 'path', 'labels'])
-# print("\nHead of the converted per-frame annotations")
-# print(frame_anns_df.head())
+    print("Converting to dataframe...")
+    frame_anns_df = pd.DataFrame(frame_anns, columns=['original_vido_id', 'video_id',
+                                                    'frame_id', 'path', 'labels'])
+    # print("\nHead of the converted per-frame annotations")
+    # print(frame_anns_df.head())
 
-print("Saving annotations to csv...")
-frame_anns_df.to_csv(f'{PATH_TO_CHARADES_ROOT}/Charades_per-frame_annotations.csv', index=False)
+    print("Saving annotations to csv...")
+    frame_anns_df.to_csv(f'{PATH_TO_CHARADES_ROOT}/Charades_per-frame_annotations_{phase}.csv', sep=' ', index=False)
