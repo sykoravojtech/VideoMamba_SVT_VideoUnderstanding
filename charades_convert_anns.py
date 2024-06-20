@@ -76,8 +76,6 @@ def create_frame_anns(vid_anns, path_to_frame_data):
             frm_path = os.path.join(path_to_frame_data, vid_id, f"{frm_id}.jpg")
             ann_entry = (vid_id, DUMMY_1, DUMMY_2, frm_path, vid_labels)
             frm_anns.append(ann_entry)
-        
-        break
     return frm_anns
 
 
