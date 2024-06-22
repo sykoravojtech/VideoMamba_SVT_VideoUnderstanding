@@ -14,7 +14,7 @@ from src.datasets import create_dataset, classification_collate_fn, captioning_c
 from src.utils.general import set_deterministic
 
 parser = argparse.ArgumentParser(description="Train a video model")
-parser.add_argument("--config", help="The config file", 
+parser.add_argument("-c", "--config", help="The config file", 
                         default="src/config/cls_svt_ucf101_s224_f8_exp0.yaml")
 
 args = parser.parse_args()
