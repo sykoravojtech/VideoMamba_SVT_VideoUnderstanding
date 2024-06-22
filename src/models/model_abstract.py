@@ -4,7 +4,7 @@ from typing import Tuple, Dict
 import torch
 from torch import nn
 from torch.optim import AdamW
-from torch.optim.lr_scheduler import CosineAnnealingLR
+from torch.optim.lr_scheduler import CosineAnnealingLR, MultiStepLR
 from fvcore.common.config import CfgNode
 from lightning import LightningModule
 
@@ -72,6 +72,11 @@ class ModelAbstract(abc.ABC, LightningModule):
         if self.config.TRAIN.COMPUTE_METRIC_AT_TRAIN_TIME:
             self.validation_step_outputs.append({'preds': y_pred.cpu(), 'labels':to_cpu(y)})
 
+    def predict_step(self, batch):
+        X, y = batch
+        y_pred = self(X, y)
+        return y_pred, y
+
     @abc.abstractmethod
     def compute_metrics(self, step_outputs) -> Dict:
        return dict()
@@ -95,15 +100,16 @@ class ModelAbstract(abc.ABC, LightningModule):
                         eps=self.config.TRAIN.OPTIM.EPS, betas=self.config.TRAIN.OPTIM.BETAS)
 
         # Defining LR SCheduler
-        lr_scheduler = CosineAnnealingLR(optimizer, T_max=self.config.TRAIN.OPTIM.MAX_LR_STEPS,
-                                        eta_min=self.config.TRAIN.OPTIM.MIN_LEARNING_RATE)
+        # lr_scheduler = CosineAnnealingLR(optimizer, T_max=self.config.TRAIN.OPTIM.MAX_LR_STEPS,
+        #                                 eta_min=self.config.TRAIN.OPTIM.MIN_LEARNING_RATE)
+        lr_scheduler = MultiStepLR(optimizer, milestones=self.config.TRAIN.OPTIM.LR_MILESTONES, gamma=0.1)
 
         return {
             "optimizer": optimizer,
             "lr_scheduler": {
                 "scheduler": lr_scheduler,
-                # "monitor": "metric_to_track",
-                # "frequency": "indicates how often the metric is updated"
+                "interval": 'epoch', # The unit of the scheduler's step size
+                "frequency": 1, # The frequency of the scheduler
                 # If "monitor" references validation metrics, then "frequency" should be set to a
                 # multiple of "trainer.check_val_every_n_epoch".
             },

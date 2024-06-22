@@ -25,8 +25,9 @@ def AP(y_true: np.ndarray, y_pred: np.ndarray) -> float:
 
 
 def compute_multilabel_mAP(y_true: np.ndarray, y_pred: np.ndarray, num_labels: int) -> float:
-    mAP = 0
+    mAP = []
     for class_id in range(num_labels):
         ap = AP(y_true[:, class_id], y_pred[:, class_id])
-        mAP += ap
-    return mAP / num_labels
+        if not np.isnan(ap):
+            mAP.append(ap)
+    return np.mean(mAP)

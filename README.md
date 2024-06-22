@@ -89,6 +89,9 @@ wget https://ai2-public-datasets.s3-us-west-2.amazonaws.com/charades/Charades_v1
 tar -xvf Charades_v1_rgb.tar
 cd ../../..
 
+# generate Charades annotations
+python charades_convert_anns.py
+
 # visualize 1 sample of data, the result is saved in assets
 python visualize_dataset.py
 
