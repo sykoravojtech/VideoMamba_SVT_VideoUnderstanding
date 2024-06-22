@@ -28,7 +28,7 @@ DATA:
   TRAIN_CSV: Charades_per-frame_annotations_action_cls_train.csv
   TEST_CSV: Charades_per-frame_annotations_action_cls_test.csv
   IMG_SIZE: 224
-  NUM_SAMPLED_FRAMES: 8
+  NUM_SAMPLED_FRAMES: 16
   CLIP_DURATION: 30
   FPS: 24
   MEAN: [0.45, 0.45, 0.45]

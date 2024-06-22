@@ -30,9 +30,9 @@ class VideoMambaEncoder(EncoderAbstract):
         kwargs = {
             "pretrained": pretrained,
             "num_classes": 0, # not config.MODEL.HEAD.NUM_CLASSES because we have our own head
-            "img_size": config.DATA.TRAIN_CROP_SIZE,
+            "img_size": config.DATA.IMG_SIZE,
             "norm_epsilon": config.TRAIN.OPTIM.EPS,
-            "device": "cuda" if config.TRAIN.ACCELERATOR == "gpu" else config.TRAIN.ACCELERATOR,
+            "device": "cuda" if config.TRAIN.ACCELERATOR == "auto" else config.TRAIN.ACCELERATOR,
             # "embed_dim": config.MODEL.ENCODER.HIDDEN_SIZE, # already implemented in the model
         }
         if config.MODEL.ENCODER.MODEL_SIZE == "tiny":
