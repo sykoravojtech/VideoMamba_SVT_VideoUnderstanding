@@ -81,7 +81,7 @@ cd ..
 python download_weights.py
 
 # download data
-python download_data.py -ufc
+python download_data.py -ucf
 python download_data.py -charades
 cd data/raw/
 mkdir Charades_frames
