@@ -21,9 +21,9 @@ args = parser.parse_args()
 
 def get_collate_fn(config: CfgNode):
     if config.MODEL.TYPE == 'classification':
-        return classification_collate_fn
+        return classification_collate_fn(config)
     elif config.MODEL.TYPE == 'captioning':
-        return captioning_collate_fn
+        return captioning_collate_fn(config)
     else:
         raise ValueError("Invalid model type")
 
@@ -38,10 +38,10 @@ def train():
     set_deterministic(config.SEED)
 
     # Wandb init
-    # wandb.login(key=config.WANDB_KEY)
-    # wandb.init(project=config.PROJECT_NAME,
-    #             name=config.EXPERIMENT,
-    #             group=config.MODEL.TYPE)
+    wandb.login(key=config.WANDB_KEY)
+    wandb.init(project=config.PROJECT_NAME,
+                name=config.EXPERIMENT,
+                group=config.MODEL.TYPE)
 
     # create dataset
     dataset = create_dataset(config)
@@ -64,24 +64,25 @@ def train():
 
     # callbacks
     output_dir = os.path.join(config.OUTPUT_DIR, config.EXPERIMENT)
-    # wandb_logger = WandbLogger(project=config.PROJECT_NAME)
+    wandb_logger = WandbLogger(project=config.PROJECT_NAME)
     lr_monitor = LearningRateMonitor(logging_interval='step')
+    checkpoint_monitor_criterion = config.TRAIN.BEST_CHECKPOINT_BY
     checkpointer = ModelCheckpoint(
          dirpath=os.path.join(output_dir,),
-         filename='{epoch:}-{val_loss:.3f}-{val_accuracy:.3f}',
-         monitor='val_loss',
+         filename='{epoch:}-{%s:.3f}'%(checkpoint_monitor_criterion),
+         monitor=checkpoint_monitor_criterion,
          verbose=True,
-         save_weights_only=True
+         save_weights_only=True,
+         mode='min' if 'loss' in checkpoint_monitor_criterion else 'max'
     )
     
     # trainer
-    devices = config.TRAIN.DEVICES if torch.cuda.is_available() else 'cpu'
-    trainer = Trainer(default_root_dir=output_dir, precision=16, max_epochs=config.TRAIN.NUM_EPOCHS,
+    trainer = Trainer(default_root_dir=output_dir, precision=config.TRAIN.PRECISION, max_epochs=config.TRAIN.NUM_EPOCHS,
                      check_val_every_n_epoch=1, enable_checkpointing=True,
                      log_every_n_steps=config.TRAIN.LOG_STEPS,
-                    #  logger=wandb_logger,
+                     logger=wandb_logger,
                      callbacks=[lr_monitor, checkpointer],
-                     accelerator=config.TRAIN.ACCELERATOR, devices=devices)
+                     accelerator=config.TRAIN.ACCELERATOR, devices=config.TRAIN.DEVICES)
 
     # training
     trainer.fit(model=lit_module, train_dataloaders=train_loader, val_dataloaders=valid_loader)

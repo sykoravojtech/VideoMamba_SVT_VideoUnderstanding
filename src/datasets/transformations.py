@@ -22,7 +22,7 @@ from torchvision.transforms import (
 def get_train_transforms(config: CfgNode):
     mean = config.DATA.MEAN
     std = config.DATA.STD
-    resize_to = (config.DATA.TRAIN_CROP_SIZE, config.DATA.TRAIN_CROP_SIZE)
+    resize_to = (config.DATA.IMG_SIZE, config.DATA.IMG_SIZE)
     train_transforms = Compose(
         [
             ApplyTransformToKey(
@@ -43,7 +43,7 @@ def get_train_transforms(config: CfgNode):
 
 
 def get_val_transforms(config: CfgNode):
-    resize_to = (config.DATA.TRAIN_CROP_SIZE, config.DATA.TRAIN_CROP_SIZE)
+    resize_to = (config.DATA.IMG_SIZE, config.DATA.IMG_SIZE)
     mean = config.DATA.MEAN
     std = config.DATA.STD
     val_transforms = Compose(

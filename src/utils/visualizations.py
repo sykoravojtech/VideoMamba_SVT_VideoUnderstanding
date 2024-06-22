@@ -16,7 +16,7 @@ def investigate_video(sample_video, dataset_name, id2label=None):
         print(f"Video label: {[id2label[l] for l in sample_video['video_label']]}")
     elif dataset_name == 'charades_caption':
         print(f"Video caption:", sample_video['label_str'])
-        print(f"Video caption (tokenized):",)
+        # print(f"Video caption (tokenized):",)
         print(sample_video['label'])
     else:
         print(f"Video label: {id2label[sample_video['label']]}")

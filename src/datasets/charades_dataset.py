@@ -209,8 +209,8 @@ class CharadesCaptionDataset(DatasetAbstract):
         super().__init__()
         self.config = config
         self.dataset_root_path = pathlib.Path(config.DATA.ROOT_PATH)
-        self.train_csv_path = self.dataset_root_path / "Charades_per-frame_annotations_captioning_train.csv"
-        self.test_csv_path = self.dataset_root_path / "Charades_per-frame_annotations_captioning_test.csv"
+        self.train_csv_path = self.dataset_root_path / config.DATA.TRAIN_CSV
+        self.test_csv_path = self.dataset_root_path / config.DATA.TEST_CSV
 
         self.clip_duration = config.DATA.CLIP_DURATION
 
@@ -244,15 +244,15 @@ class CharadesActionClassification(DatasetAbstract):
         super().__init__()
         self.config = config
         self.dataset_root_path = pathlib.Path(config.DATA.ROOT_PATH)
-        self.train_csv_path = self.dataset_root_path / "Charades_per-frame_annotations_action_cls_train.csv"
-        self.test_csv_path = self.dataset_root_path / "Charades_per-frame_annotations_action_cls_test.csv"
+        self.train_csv_path = self.dataset_root_path / config.DATA.TRAIN_CSV
+        self.test_csv_path = self.dataset_root_path / config.DATA.TEST_CSV
 
         self.label_map = pd.read_csv(self.dataset_root_path / "Charades_v1_classes_new_map.csv")
 
         self.label2id = self.label_map.set_index('action')['label'].to_dict()
         self.id2label = self.label_map.set_index('label')['action'].to_dict()
 
-        self.clip_duration = config.DATA.NUM_SAMPLED_FRAMES * config.DATA.SAMPLE_RATE / config.DATA.FPS
+        self.clip_duration = config.DATA.CLIP_DURATION
 
         self.train_transforms = get_train_transforms(config)
         self.val_transforms = get_val_transforms(config)

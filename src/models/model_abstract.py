@@ -11,7 +11,7 @@ from lightning import LightningModule
 from .encoders.encoder_abstract import EncoderAbstract
 from .heads.head_abstract import HeadAbstract
 
-from ..utils.general import freeze_subnet
+from ..utils.general import freeze_subnet, to_cpu
 
 class ModelAbstract(abc.ABC, LightningModule):
     """Define common methods and abstract methods for the all sub-class models"""
@@ -60,7 +60,8 @@ class ModelAbstract(abc.ABC, LightningModule):
         y_pred = self(X, y)
         loss = self.compute_loss(y_pred, y)
         self.log("train_loss", loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
-        self.training_step_outputs.append({'preds': y_pred, 'labels':y})
+        if self.config.TRAIN.COMPUTE_METRIC_AT_TRAIN_TIME:
+            self.training_step_outputs.append({'preds': y_pred.cpu(), 'labels':to_cpu(y)})
         return loss
     
     def validation_step(self, batch: Tuple):
@@ -68,7 +69,8 @@ class ModelAbstract(abc.ABC, LightningModule):
         y_pred = self(X, y)
         val_loss = self.compute_loss(y_pred, y)
         self.log("val_loss", val_loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
-        self.validation_step_outputs.append({'preds': y_pred, 'labels':y})
+        if self.config.TRAIN.COMPUTE_METRIC_AT_TRAIN_TIME:
+            self.validation_step_outputs.append({'preds': y_pred.cpu(), 'labels':to_cpu(y)})
 
     @abc.abstractmethod
     def compute_metrics(self, step_outputs) -> Dict:

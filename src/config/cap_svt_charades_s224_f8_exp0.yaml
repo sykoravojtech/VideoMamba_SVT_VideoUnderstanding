@@ -17,29 +17,34 @@ MODEL:
     LANGUAGE_MODEL: distilgpt2
     MAX_TOKENS: 128
 
+  LOSS: CrossEntropyLoss
+
 DATA:
   DATASET: charades_caption
   ROOT_PATH: data/raw/Charades
-  TRAIN_CROP_SIZE: 224
+  TRAIN_CSV: Charades_per-frame_annotations_captioning_train.csv
+  TEST_CSV: Charades_per-frame_annotations_captioning_test.csv
+  IMG_SIZE: 224
   NUM_SAMPLED_FRAMES: 8
-  # SAMPLE_RATE: 4
-  # FPS: 30
-  CLIP_DURATION: 47
+  CLIP_DURATION: 30
   MEAN: [0.45, 0.45, 0.45]
   STD: [0.225, 0.225, 0.225]
-  NUM_WORKERS: 8
+  NUM_WORKERS: 16
 
 TRAIN:
   FREEZE_ENCODER: True
   NUM_EPOCHS: 30
-  BATCH_SIZE: 4
+  BATCH_SIZE: 16
   OPTIM:
     TYPE: AdamW
     INIT_LEARNING_RATE: 0.00005
     MIN_LEARNING_RATE: 0.000001
     EPS: 0.000001
     BETAS: [0.9, 0.999]
-    MAX_LR_STEPS: 100
+    MAX_LR_STEPS: 100 
   LOG_STEPS: 50
-  ACCELERATOR: gpu
-  DEVICES: 1
+  ACCELERATOR: auto
+  DEVICES: auto
+  PRECISION: 16
+  BEST_CHECKPOINT_BY: val_loss
+  COMPUTE_METRIC_AT_TRAIN_TIME: False

@@ -17,7 +17,7 @@ class GenerativeHead(HeadAbstract):
         self.language_model = AutoModelForCausalLM.from_pretrained(model_name, config=lm_config)
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.tokenizer.pad_token = self.tokenizer.eos_token
-        self.device = torch.device(self.config.TRAIN.DEVICES-1 if torch.cuda.is_available() else "cpu")
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def forward(self, enc_hidden: torch.Tensor, y: Dict[str, torch.Tensor]) -> torch.Tensor:
         enc_hidden = enc_hidden.unsqueeze(1) # make shape (bs x 1 x hidden_size)
