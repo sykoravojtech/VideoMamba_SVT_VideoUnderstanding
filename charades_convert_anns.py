@@ -132,8 +132,6 @@ def create_frame_anns(vid_anns, path_to_frame_data):
                         frm_anns.append(ann_entry)
             else:
                 continue  # Skip videos with no action labels
-        break  # Convert only one video.
-
     return frm_anns
 
 for phase in ['train', 'test']:
