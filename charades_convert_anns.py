@@ -119,11 +119,11 @@ def create_frame_anns(vid_anns, path_to_frame_data):
                 video_actions = get_actions(anns_row['actions'])
                 chunk_iterator = 0
                 for video_action in video_actions:
-                    vid_id = vid_id + str(chunk_iterator)
+                    vid_id = vid_id + str(chunk_iterator)  # use different video id for each action
                     chunk_iterator += 1
                     vid_action_label = video_action[0]
                     # since frame ids are now sorted, we can iterate numerically
-                    for i in range(video_action[1], video_action[2]):
+                    for i in range(video_action[1], video_action[2]):  # from action start to end
                         frm_path = os.path.join(path_to_frame_data, vid_id, f"{frm_ids[i]}.jpg")
                         ann_entry = (vid_id, DUMMY_1, DUMMY_2, frm_path, vid_action_label)
                         frm_anns.append(ann_entry)
