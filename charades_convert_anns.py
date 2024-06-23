@@ -21,6 +21,9 @@ DUMMY_2 = -1  # placeholder for frame_id, unused in the implementation
 FPS = 24  # As per https://prior.allenai.org/projects/charades set fps to 24
 
 MULTILABEL = False  # Toggle mutlilabel vs single label format.
+ACTION_SAFETY_MARGIN = 0.1  # Cut ACTION_SAFETY_MARGIN seconds
+                            #       from the start and end time of action sections.
+                            #       This serves to prevent going out of bounds.
 
 # Create the action labels csv file: convert action codes to integer labels.
 # Save to: .../Charades/Charades_v1_classes_new_map.csv
@@ -54,19 +57,43 @@ def get_frame_ids(vid_id, path_to_frame_data):
     """Returns frame ids from a video of the per-frame rgb data in a list, 
             given the path to the data and a video id"""
     video_path = os.path.join(path_to_frame_data, vid_id)
-    return [os.path.splitext(f)[0] for f in os.listdir(video_path)
+    frame_ids = [os.path.splitext(f)[0] for f in os.listdir(video_path)
             if os.path.isfile(os.path.join(video_path, f))]
+    # Sort frame ids based on the numerical part after the dash
+    frame_ids.sort(key=lambda x: int(x.split('-')[-1]))
+    return frame_ids
 
-def get_labels(str_labels):
-    """Convert a sequence of (start time, end time, action id) to a sequence of integer labels.
+def get_labels(raw_actions):
+    """Convert a sequence of (action id, start time, end time) to a sequence of integer labels.
             Returns a 1d list of integers."""
     int_labels = []
-    if pd.isnull(str_labels):
+    if pd.isnull(raw_actions):
         return ''
-    for item in str_labels.split(';'):
+    for item in raw_actions.split(';'):
         action_id = item.split(' ')[0]
         int_labels.append(ACTION_ID_TO_LABEL[action_id])
     return int_labels
+
+def get_actions(raw_actions):
+    """Convert a sequence of (action id, start time, end time) to a nested integer list,
+            with frame numbers reconstructed from timestamps. 
+            Returns a 2d list, with entries of the form 
+            [(int): action label, (int): first action frame, (int): last action frame]"""
+    actns = []
+    for item in raw_actions.split(';'):
+        action = item.split(' ')
+
+        # convert action code to integer action label
+        action[0] = ACTION_ID_TO_LABEL[action[0]]
+
+        # convert timecodes in seconds (float) to frame number (int),
+        #       as frame number = timecode +- safety margin * FPS
+        action[1] = int((float(action[1]) + ACTION_SAFETY_MARGIN) * FPS)
+        action[2] = int((float(action[1]) - ACTION_SAFETY_MARGIN) * FPS)
+
+        actns.append(action)
+    return actns
+
 
 def create_frame_anns(vid_anns, path_to_frame_data):
     """Returns annotations with the desired frame paths,
@@ -88,9 +115,20 @@ def create_frame_anns(vid_anns, path_to_frame_data):
                 frm_anns.append(ann_entry)
 
         if not MULTILABEL:
-            # separate video instance into multiple action chunks, 
-            #       then operate on them differently, storing only one label
-            continue
+            if pd.notnull(anns_row['actions']):
+                video_actions = get_actions(anns_row['actions'])
+                chunk_iterator = 0
+                for video_action in video_actions:
+                    vid_id = vid_id + str(chunk_iterator)
+                    chunk_iterator += 1
+                    vid_action_label = video_action[0]
+                    # since frame ids are now sorted, we can iterate numerically
+                    for i in range(video_action[1], video_action[2]):
+                        frm_path = os.path.join(path_to_frame_data, vid_id, f"{frm_ids[i]}.jpg")
+                        ann_entry = (vid_id, DUMMY_1, DUMMY_2, frm_path, vid_action_label)
+                        frm_anns.append(ann_entry)
+            else:
+                continue  # Skip videos with no action labels
         break  # Convert only one video.
 
     return frm_anns
