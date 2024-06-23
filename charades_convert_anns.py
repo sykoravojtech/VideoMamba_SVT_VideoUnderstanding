@@ -13,7 +13,6 @@ annotations with per-frame video labels. The resulting annotations are stored in
 
 PATH_TO_CHARADES_ROOT = "./data/raw/Charades/"
 PATH_TO_FRAME_DATA = f"./data/raw/Charades_frames/Charades_v1_rgb/"
-# adjust file path
 
 DUMMY_1 = -1  # placeholder for video_id, unused in the implementation
 DUMMY_2 = -1  # placeholder for frame_id, unused in the implementation
@@ -74,9 +73,10 @@ def get_labels(raw_actions):
         int_labels.append(ACTION_ID_TO_LABEL[action_id])
     return int_labels
 
-def get_actions(raw_actions):
+def get_actions(raw_actions, vid_length):
     """Convert a sequence of (action id, start time, end time) to a nested integer list,
-            with frame numbers reconstructed from timestamps. 
+            with frame numbers reconstructed from timestamps.
+            Also requires vid_length (float) to handle poor video annotations.
             Returns a 2d list, with entries of the form 
             [(int): action label, (int): first action frame, (int): last action frame]"""
     actns = []
@@ -89,11 +89,13 @@ def get_actions(raw_actions):
         # convert timecodes in seconds (float) to frame number (int),
         #       as frame number = timecode +- safety margin * FPS
         action[1] = int((float(action[1]) + ACTION_SAFETY_MARGIN) * FPS)
-        action[2] = int((float(action[1]) - ACTION_SAFETY_MARGIN) * FPS)
+        if float(action[2]) < vid_length:  # Check if action end mark is less than vid length
+            action[2] = int((float(action[2]) - ACTION_SAFETY_MARGIN) * FPS)
+        else:
+            action[2] =  int((vid_length - ACTION_SAFETY_MARGIN) * FPS)
 
         actns.append(action)
     return actns
-
 
 def create_frame_anns(vid_anns, path_to_frame_data):
     """Returns annotations with the desired frame paths,
@@ -116,16 +118,17 @@ def create_frame_anns(vid_anns, path_to_frame_data):
 
         if not MULTILABEL:
             if pd.notnull(anns_row['actions']):
-                video_actions = get_actions(anns_row['actions'])
+                video_actions = get_actions(anns_row['actions'], float(anns_row['length']))
                 chunk_iterator = 0
                 for video_action in video_actions:
-                    vid_id = vid_id + str(chunk_iterator)  # use different video id for each action
+                    vid_action_id = vid_id + '_' + str(chunk_iterator)  # use different video id for each action
                     chunk_iterator += 1
                     vid_action_label = video_action[0]
                     # since frame ids are now sorted, we can iterate numerically
+
                     for i in range(video_action[1], video_action[2]):  # from action start to end
                         frm_path = os.path.join(path_to_frame_data, vid_id, f"{frm_ids[i]}.jpg")
-                        ann_entry = (vid_id, DUMMY_1, DUMMY_2, frm_path, vid_action_label)
+                        ann_entry = (vid_action_id, DUMMY_1, DUMMY_2, frm_path, vid_action_label)
                         frm_anns.append(ann_entry)
             else:
                 continue  # Skip videos with no action labels
