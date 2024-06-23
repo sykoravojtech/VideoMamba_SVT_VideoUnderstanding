@@ -58,14 +58,15 @@ def get_frame_ids(vid_id, path_to_frame_data):
             if os.path.isfile(os.path.join(video_path, f))]
 
 def get_labels(str_labels):
-    '''Convert a sequence of (start time, end time, action id) to a sequence of integer labels.'''
+    """Convert a sequence of (start time, end time, action id) to a sequence of integer labels.
+            Returns a 1d list of integers."""
     int_labels = []
     if pd.isnull(str_labels):
         return ''
     for item in str_labels.split(';'):
         action_id = item.split(' ')[0]
-        int_labels.append(str(ACTION_ID_TO_LABEL[action_id]))
-    return "," .join(int_labels)
+        int_labels.append(ACTION_ID_TO_LABEL[action_id])
+    return int_labels
 
 def create_frame_anns(vid_anns, path_to_frame_data):
     """Returns annotations with the desired frame paths,
@@ -75,14 +76,20 @@ def create_frame_anns(vid_anns, path_to_frame_data):
         vid_id = anns_row['id']
         frm_ids = get_frame_ids(vid_id, path_to_frame_data)
         if MULTILABEL:
-            vid_labels = get_labels(anns_row['actions']) if pd.notnull(anns_row['actions']) else ''
+            int_labels = get_labels(anns_row['actions']) if pd.notnull(anns_row['actions']) else ''
+            str_multilabel = []
+            for int_label in int_labels:
+                str_multilabel.append(int_label)
+            str_multilabel = "," .join(str_multilabel)
 
             for frm_id in frm_ids:
                 frm_path = os.path.join(path_to_frame_data, vid_id, f"{frm_id}.jpg")
-                ann_entry = (vid_id, DUMMY_1, DUMMY_2, frm_path, vid_labels)
+                ann_entry = (vid_id, DUMMY_1, DUMMY_2, frm_path, str_multilabel)
                 frm_anns.append(ann_entry)
+
         if not MULTILABEL:
-            # separate video instance into multiple action chunks, then operate on them differently, storing only one label
+            # separate video instance into multiple action chunks, 
+            #       then operate on them differently, storing only one label
             continue
         break  # Convert only one video.
 
