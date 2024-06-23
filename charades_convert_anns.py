@@ -78,51 +78,6 @@ def create_frame_anns(vid_anns, path_to_frame_data):
             frm_anns.append(ann_entry)
     return frm_anns
 
-
-"""
-The following commented lines are strictly intended for demonstration purposes.
-
-
-# Example for action mapping
-print("\nA few mappings from the action to ID supporting dict:")
-print(dict(list(ACTION_ID_TO_LABEL.items())[:5]))
-
-
-print("\nA few action class mappings to integer labels:")
-print(action_df.head())
-
-# Example load and print of video anns
-print("\nFirst few lines of the video annotations:")
-print(video_anns.head())
-
-print("\n A few actions in label format:")
-for i in range(5):
-    out = get_label(video_anns.head()['actions'].iloc[i])
-    print(out if out!="" else "(No action class label found)")
-
-
-# Example crawl of video ids and print
-video_ids = get_video_ids(PATH_TO_FRAME_DATA)
-print("\nA few video ids:")
-print(video_ids[:10])
-
-
-# Example crawl of frame paths and print
-print("\nA few frame ids for a few videos:")
-for video_id in video_ids[:5]:
-    frame_ids = get_frame_ids(video_id, PATH_TO_FRAME_DATA)
-    print(f"Video ID: {video_id}, Frame IDs: {frame_ids[:5]}")
-
-
-# Example per-frame path and annotation creation
-demo_frame_anns = create_frame_anns(video_anns, video_ids[:5], PATH_TO_FRAME_DATA)
-print("\nA few per-frame annotations from head and tail:")
-for annotation in demo_frame_anns[:3]:
-    print(annotation)
-for annotation in demo_frame_anns[-3:]:
-    print(annotation)
-"""
-
 for phase in ['train', 'test']:
     # Get video annotations
     video_anns = pd.read_csv(f"{PATH_TO_CHARADES_ROOT}/Charades_v1_{phase}.csv")
