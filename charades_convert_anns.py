@@ -8,7 +8,7 @@ from tqdm.auto import tqdm
 This script takes charades video annotations from ../Charades/Charades_v1_{train/test}.csv 
 and frame data from ../Charades/Charades_frames/ and extrapolates per-frame
 annotations with per-frame video labels. The resulting annotations are stored in
-../Charades/Charades_per-frame_annotations_{train/test}.csv
+../Charades/Charades_per-frame_annotations_{train/test}.csv and computes various statistics.
 """
 
 PATH_TO_CHARADES_ROOT = "./data/raw/Charades/"
@@ -40,11 +40,8 @@ action_df = pd.DataFrame({'action_id': action_ids, 'action': actions})
 action_df['label'] = np.arange(len(action_df))
 action_df.to_csv(f'{PATH_TO_CHARADES_ROOT}/Charades_v1_classes_new_map.csv', index=False)
 
-
-
 # Create supporting dict to convert action codes to integer labels
 ACTION_ID_TO_LABEL = action_df.set_index('action_id')['label'].to_dict()
-
 
 def get_video_ids(path_to_frame_data):
     """Returns video ids from the per-frame rgb data in a list,
@@ -101,6 +98,10 @@ def create_frame_anns(vid_anns, path_to_frame_data):
     """Returns annotations with the desired frame paths,
             given the path to the data and the full video ids"""
     frm_anns = []
+    action_count = 0
+    frame_counts_per_action = []
+    action_class_counts = {label: 0 for label in ACTION_ID_TO_LABEL.values()}
+    
     for _, anns_row in tqdm(vid_anns.iterrows(), total=len(vid_anns)):
         vid_id = anns_row['id']
         frm_ids = get_frame_ids(vid_id, path_to_frame_data)
@@ -119,11 +120,15 @@ def create_frame_anns(vid_anns, path_to_frame_data):
         if not MULTILABEL:
             if pd.notnull(anns_row['actions']):
                 video_actions = get_actions(anns_row['actions'], float(anns_row['length']))
+                action_count += len(video_actions)
                 chunk_iterator = 0
                 for video_action in video_actions:
                     vid_action_id = vid_id + '_' + str(chunk_iterator)  # use different video id for each action
                     chunk_iterator += 1
                     vid_action_label = video_action[0]
+                    action_class_counts[vid_action_label] += 1
+                    frame_count = video_action[2] - video_action[1]
+                    frame_counts_per_action.append(frame_count)
                     # since frame ids are now sorted, we can iterate numerically
 
                     for i in range(video_action[1], video_action[2]):  # from action start to end
@@ -132,6 +137,22 @@ def create_frame_anns(vid_anns, path_to_frame_data):
                         frm_anns.append(ann_entry)
             else:
                 continue  # Skip videos with no action labels
+
+    # Compute statistics
+    total_actions = action_count
+    total_frames = len(frm_anns)
+    unique_frames = len(set([ann[3] for ann in frm_anns]))
+    mean_frames_per_action = np.mean(frame_counts_per_action)
+    std_frames_per_action = np.std(frame_counts_per_action)
+    
+    print("\nStatistics:")
+    print(f"Total number of actions: {total_actions}")
+    print(f"Mean number of frames per action: {mean_frames_per_action:.2f}")
+    print(f"Standard deviation of frames per action: {std_frames_per_action:.2f}")
+    print(f"Number of actions per class: {action_class_counts}")
+    print(f"Total number of stored frame paths: {total_frames}")
+    print(f"Number of unique stored frames: {unique_frames}")
+
     return frm_anns
 
 for phase in ['train', 'test']:
@@ -144,7 +165,7 @@ for phase in ['train', 'test']:
 
     print("Converting to dataframe...")
     frame_anns_df = pd.DataFrame(frame_anns, columns=['original_vido_id', 'video_id',
-                                                    'frame_id', 'path', 'labels'])
+                                                      'frame_id', 'path', 'labels'])
     # print("\nHead of the converted per-frame annotations")
     # print(frame_anns_df.head())
 
