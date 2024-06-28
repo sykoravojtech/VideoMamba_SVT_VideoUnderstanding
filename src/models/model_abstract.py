@@ -75,7 +75,7 @@ class ModelAbstract(abc.ABC, LightningModule):
     def predict_step(self, batch):
         X, y = batch
         y_pred = self(X, y)
-        return y_pred, y
+        return X.cpu(), y_pred.cpu(), y.cpu()
 
     @abc.abstractmethod
     def compute_metrics(self, step_outputs) -> Dict:
