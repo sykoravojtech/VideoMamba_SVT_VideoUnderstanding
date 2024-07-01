@@ -17,6 +17,8 @@ PATH_TO_FRAME_DATA = f"./data/raw/Charades_frames/Charades_v1_rgb/"
 DUMMY_1 = -1  # placeholder for video_id, unused in the implementation
 DUMMY_2 = -1  # placeholder for frame_id, unused in the implementation
 
+TARGET_NUM_FRAMES_PER_VIDEO = 16
+SAMPLES = None # Sampling some videos for demo training
 
 # Create the action labels csv file: convert action codes to integer labels.
 # Save to: .../Charades/Charades_v1_classes_new_map.csv
@@ -66,18 +68,30 @@ def get_label(str_labels):
 def create_frame_anns(vid_anns, path_to_frame_data):
     """Returns annotations with the desired frame paths,
             given the path to the data and the full video ids"""
-    frm_anns = []
-    for _, anns_row in tqdm(vid_anns.iterrows(), total=len(vid_anns)):
+    frm_cls_anns = []
+    frm_cap_anns = []
+    for vid_count, anns_row in tqdm(vid_anns.iterrows(), total=len(vid_anns)):
         vid_id = anns_row['id']
         frm_ids = get_frame_ids(vid_id, path_to_frame_data)
         vid_labels = get_label(anns_row['actions']) if pd.notnull(anns_row['actions']) else ''
+        caption = anns_row['script']
 
-        for frm_id in frm_ids:
+        stride = int(len(frm_ids) / TARGET_NUM_FRAMES_PER_VIDEO)
+        if stride == 0:
+            stride = 1
+            print(f'Video {vid_id} only has {len(frm_ids)} frames')
+        
+        for _id, frm_id in enumerate(frm_ids):
+            if _id % stride != 0:
+                continue
             frm_path = os.path.join(path_to_frame_data, vid_id, f"{frm_id}.jpg")
-            ann_entry = (vid_id, DUMMY_1, DUMMY_2, frm_path, vid_labels)
-            frm_anns.append(ann_entry)
-    return frm_anns
+            frm_cls_anns.append((vid_id, DUMMY_1, DUMMY_2, frm_path, vid_labels))
+            frm_cap_anns.append((vid_id, DUMMY_1, DUMMY_2, frm_path, caption))
 
+        if SAMPLES:
+            if vid_count > SAMPLES:
+                break
+    return frm_cls_anns, frm_cap_anns
 
 """
 The following commented lines are strictly intended for demonstration purposes.
@@ -129,13 +143,19 @@ for phase in ['train', 'test']:
 
     # Finally, it's time to create the true dataframe we will use.
     print("Creating per-frame annotations (this may take a while)...")
-    frame_anns = create_frame_anns(video_anns, PATH_TO_FRAME_DATA)
+    frame_cls_anns, frame_cap_anns = create_frame_anns(video_anns, PATH_TO_FRAME_DATA)
 
     print("Converting to dataframe...")
-    frame_anns_df = pd.DataFrame(frame_anns, columns=['original_vido_id', 'video_id',
+    frame_cls_anns_df = pd.DataFrame(frame_cls_anns, columns=['original_vido_id', 'video_id',
                                                     'frame_id', 'path', 'labels'])
-    # print("\nHead of the converted per-frame annotations")
-    # print(frame_anns_df.head())
+
+    frame_cap_anns_df = pd.DataFrame(frame_cap_anns, columns=['original_vido_id', 'video_id',
+                                                    'frame_id', 'path', 'caption'])
 
     print("Saving annotations to csv...")
-    frame_anns_df.to_csv(f'{PATH_TO_CHARADES_ROOT}/Charades_per-frame_annotations_{phase}.csv', sep=' ', index=False)
+    if not SAMPLES:
+        frame_cls_anns_df.to_csv(f'{PATH_TO_CHARADES_ROOT}/Charades_per-frame_annotations_action_cls_{phase}.csv', sep=' ', index=False)
+        frame_cap_anns_df.to_csv(f'{PATH_TO_CHARADES_ROOT}/Charades_per-frame_annotations_captioning_{phase}.csv', sep=' ', index=False)
+    else:
+        frame_cls_anns_df.to_csv(f'{PATH_TO_CHARADES_ROOT}/Charades_per-frame_annotations_action_cls_{phase}_samples.csv', sep=' ', index=False)
+        frame_cap_anns_df.to_csv(f'{PATH_TO_CHARADES_ROOT}/Charades_per-frame_annotations_captioning_{phase}_samples.csv', sep=' ', index=False)

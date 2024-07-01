@@ -19,12 +19,13 @@ def vis():
     train_ds = dataset.get_train_dataset()
     sample_video = next(iter(train_ds))
     print(sample_video.keys())
-    if config.DATA.DATASET == 'charades':
-        label_field = 'video_label'
-    else:
-        label_field = 'label'
-    investigate_video(sample_video, dataset.get_id2label(), label_field=label_field)
-    print(len(dataset.get_id2label()))
+    dataset_name = config.DATA.DATASET
+    task = config.MODEL.TYPE
+    id2label = dataset.get_id2label() if task=='classification' else None
+    investigate_video(sample_video, dataset_name=dataset_name, 
+                    id2label=id2label)
+    if id2label:
+        print(len(dataset.get_id2label()))
 
     video_tensor = sample_video["video"]
     save_path =  f"assets/sample_{config.DATA.DATASET}.gif"

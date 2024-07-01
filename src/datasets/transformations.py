@@ -22,7 +22,7 @@ from torchvision.transforms import (
 def get_train_transforms(config: CfgNode):
     mean = config.DATA.MEAN
     std = config.DATA.STD
-    resize_to = (config.DATA.TRAIN_CROP_SIZE, config.DATA.TRAIN_CROP_SIZE)
+    resize_to = (config.DATA.IMG_SIZE, config.DATA.IMG_SIZE)
     train_transforms = Compose(
         [
             ApplyTransformToKey(
@@ -32,8 +32,7 @@ def get_train_transforms(config: CfgNode):
                         UniformTemporalSubsample(config.DATA.NUM_SAMPLED_FRAMES),
                         Lambda(lambda x: x / 255.0),
                         Normalize(mean, std),
-                        RandomShortSideScale(min_size=256, max_size=320),
-                        RandomCrop(resize_to),
+                        Resize(resize_to),
                         RandomHorizontalFlip(p=0.5),
                     ]
                 ),
@@ -44,7 +43,7 @@ def get_train_transforms(config: CfgNode):
 
 
 def get_val_transforms(config: CfgNode):
-    resize_to = (config.DATA.TRAIN_CROP_SIZE, config.DATA.TRAIN_CROP_SIZE)
+    resize_to = (config.DATA.IMG_SIZE, config.DATA.IMG_SIZE)
     mean = config.DATA.MEAN
     std = config.DATA.STD
     val_transforms = Compose(

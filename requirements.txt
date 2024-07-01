@@ -7,5 +7,8 @@ imageio==2.34.1
 scikit-learn==1.4.2
 wget==3.2
 comet_ml==3.41.0
+timm
+triton
 wandb==0.17.0
 lightning==2.2.4
+opencv-python==4.5.5

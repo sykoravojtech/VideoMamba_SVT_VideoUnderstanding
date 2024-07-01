@@ -81,14 +81,37 @@ cd ..
 python download_weights.py
 
 # download data
-python download_data.py -ufc
+python download_data.py -ucf
 python download_data.py -charades
+cd data/raw/
+mkdir Charades_frames
+wget https://ai2-public-datasets.s3-us-west-2.amazonaws.com/charades/Charades_v1_rgb.tar
+tar -xvf Charades_v1_rgb.tar
+cd ../../..
+
+# generate Charades annotations
+python charades_convert_anns.py
 
 # visualize 1 sample of data, the result is saved in assets
 python visualize_dataset.py
 
-# training
+# visualize 1 sample of Charades multilabel classification dataset
+python visualize_dataset.py --config src/config/cls_svt_charades_s224_f8_exp0.yaml
+# visualize 1 sample of Charades captioning dataset
+python visualize_dataset.py --config src/config/cap_svt_charades_s224_f8_exp0.yaml
+
+# This installs cuda & C++ modules causal_conv1d_cuda and selective_scan_cuda. It also downloads 3 model checkpoints to PracticalML_2024/checkpoints/videomamba.
+chmod +x ./src/models/encoders/videomamba/setup.sh
+./src/models/encoders/videomamba/setup.sh
+
+# training demo on UCF101 dataset
 python train.py
+
+# training multi-action classification on Charades dataset
+python train.py --config src/config/cls_svt_charades_s224_f8_exp0.yaml
+
+# training captioning on Charades dataset
+python train.py --config src/config/cap_svt_charades_s224_f8_exp0.yaml
 ```
 Visualize training log at https://wandb.ai/PracticalML2024/PracticalML
 

@@ -592,18 +592,18 @@ class AuxTokenVisionTransformer(VisionTransformer):
 def get_vit_base_patch16_224(cfg, no_head=False, **kwargs):
     patch_size = 16
     attention_type = 'divided_space_time'
-    vit = VisionTransformer(img_size=cfg.DATA.TRAIN_CROP_SIZE, num_classes=400,
+    vit = VisionTransformer(img_size=cfg.DATA.IMG_SIZE, num_classes=400,
                             patch_size=patch_size, embed_dim=768, depth=12, num_heads=12, mlp_ratio=4,
                             qkv_bias=True, norm_layer=partial(nn.LayerNorm, eps=1e-6), drop_rate=0.,
                             attn_drop_rate=0., drop_path_rate=0.1, num_frames=cfg.DATA.NUM_SAMPLED_FRAMES,
                             attention_type=attention_type, **kwargs)
     vit.attention_type = attention_type
     vit.default_cfg = default_cfgs['vit_base_patch16_224']
-    vit.num_patches = (cfg.DATA.TRAIN_CROP_SIZE // patch_size) * (cfg.DATA.TRAIN_CROP_SIZE // patch_size)
+    vit.num_patches = (cfg.DATA.IMG_SIZE // patch_size) * (cfg.DATA.IMG_SIZE // patch_size)
     pretrained_model = ''
     if pretrained_model:
         load_pretrained(vit, num_classes=vit.num_classes, in_chans=kwargs.get('in_chans', 3),
-                        filter_fn=_conv_filter, img_size=cfg.DATA.TRAIN_CROP_SIZE, num_patches=vit.num_patches,
+                        filter_fn=_conv_filter, img_size=cfg.DATA.IMG_SIZE, num_patches=vit.num_patches,
                         attention_type=vit.attention_type, pretrained_model=pretrained_model)
     if no_head:
         vit.head = None
