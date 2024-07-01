@@ -11,6 +11,6 @@ def create_model(config: CfgNode, weight_path: str = None):
         return VideoClassificationModel(config)
     if(model_type == 'captioning'):
         if weight_path:
-            return VideoCaptioningModel(config)
-        return VideoCaptioningModel.load_from_checkpoint(weight_path)
+            return VideoCaptioningModel.load_from_checkpoint(weight_path)
+        return VideoCaptioningModel(config)
     raise NotImplementedError(f'{model_type} is not implemented.')
