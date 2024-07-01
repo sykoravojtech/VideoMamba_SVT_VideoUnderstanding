@@ -100,6 +100,10 @@ python visualize_dataset.py --config src/config/cls_svt_charades_s224_f8_exp0.ya
 # visualize 1 sample of Charades captioning dataset
 python visualize_dataset.py --config src/config/cap_svt_charades_s224_f8_exp0.yaml
 
+# This installs cuda & C++ modules causal_conv1d_cuda and selective_scan_cuda. It also downloads 3 model checkpoints to PracticalML_2024/checkpoints/videomamba.
+chmod +x ./src/models/encoders/videomamba/setup.sh
+./src/models/encoders/videomamba/setup.sh
+
 # training demo on UCF101 dataset
 python train.py
 
