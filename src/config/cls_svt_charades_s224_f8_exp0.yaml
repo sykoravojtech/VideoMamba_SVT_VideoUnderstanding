@@ -16,29 +16,38 @@ MODEL:
     TYPE: MLP
     LAYERS: [128,128]
     NUM_CLASSES: 157
+    MULTI_LABEL: True
+    THRESHOLD: 0.5
+
+  LOSS: BCEWithLogitsLoss
 
 DATA:
-  DATASET: charades
+  DATASET: charades_action_classification
   ROOT_PATH: data/raw/Charades
-  TRAIN_CROP_SIZE: 224
-  NUM_SAMPLED_FRAMES:  10
-  SAMPLE_RATE: 60
+  TRAIN_CSV: Charades_per-frame_annotations_action_cls_train.csv
+  TEST_CSV: Charades_per-frame_annotations_action_cls_test.csv
+  IMG_SIZE: 224
+  NUM_SAMPLED_FRAMES: 8
+  CLIP_DURATION: 30
   FPS: 24
   MEAN: [0.45, 0.45, 0.45]
   STD: [0.225, 0.225, 0.225]
-  NUM_WORKERS: 4
+  NUM_WORKERS: 16
 
 TRAIN:
-  FREEZE_ENCODER: True
-  NUM_EPOCHS: 10
-  BATCH_SIZE: 2
+  FREEZE_ENCODER: False
+  NUM_EPOCHS: 30
+  BATCH_SIZE: 8
   OPTIM:
     TYPE: AdamW
     INIT_LEARNING_RATE: 0.0001
     MIN_LEARNING_RATE: 0.000001
     EPS: 0.000001
     BETAS: [0.9, 0.999]
-    MAX_LR_STEPS: 100
+    LR_MILESTONES: [7, 15]
   LOG_STEPS: 50
-  ACCELERATOR: gpu
-  DEVICES: 1
+  ACCELERATOR: auto
+  DEVICES: auto
+  PRECISION: 32
+  BEST_CHECKPOINT_BY: val_mAP
+  COMPUTE_METRIC_AT_TRAIN_TIME: True
