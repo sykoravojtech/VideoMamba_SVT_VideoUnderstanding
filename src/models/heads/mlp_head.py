@@ -10,7 +10,8 @@ class Dense(nn.Module):
         self.layer = nn.Sequential(
                             nn.Linear(inp_size, out_size),
                             nn.ReLU(),
-                            nn.LayerNorm(out_size))
+                            # nn.LayerNorm(out_size)
+                            )
     def forward(self, X: torch.Tensor):
         return self.layer(X)
 
@@ -32,6 +33,7 @@ class MLPHead(HeadAbstract):
         self.classifier = nn.Linear(in_size, out_size)
 
     def forward(self, X: torch.Tensor, y: torch.Tensor = None):
+        print(X.shape)
         out = self.mlp(X)
         out = self.classifier(out)
         return out

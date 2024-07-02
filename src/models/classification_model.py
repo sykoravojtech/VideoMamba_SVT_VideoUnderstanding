@@ -34,7 +34,6 @@ class VideoClassificationModel(ModelAbstract):
         """
         all_probas = torch.cat([out['preds'].detach().cpu() for out in step_outputs])
         all_labels = torch.cat([out['labels'].detach().cpu() for out in step_outputs])
-        # print('cat shape:', all_probas.shape, all_labels.shape)
 
         if self.config.MODEL.HEAD.MULTI_LABEL:
             all_preds = all_probas.sigmoid().numpy()

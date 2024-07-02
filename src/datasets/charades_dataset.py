@@ -371,7 +371,7 @@ class CharadesActionClassification(DatasetAbstract):
     def get_train_dataset(self) -> Dataset:
         train_dataset = CustomCharadesForActionClassification(
             data_path=str(self.train_csv_path),
-            clip_sampler=pytorchvideo.data.make_clip_sampler("random", self.clip_duration),
+            clip_sampler=pytorchvideo.data.make_clip_sampler("uniform", self.clip_duration),
             transform=self.train_transforms,
             fps=self.fps
         )
