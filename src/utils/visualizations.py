@@ -13,7 +13,7 @@ def investigate_video(sample_video, dataset_name, id2label=None):
             print(k, sample_video[k])
     
     if dataset_name == 'charades_action_classification':
-        print(f"Video label: {[id2label[l] for l in sample_video['video_label']]}")
+        print(f"Clip label: {[id2label[l] for l in sample_video['clip_label']]}")
     elif dataset_name == 'charades_caption':
         print(f"Video caption:", sample_video['label_str'])
         # print(f"Video caption (tokenized):",)
@@ -39,7 +39,7 @@ def create_gif(video_tensor, filename,  mean, std):
     for video_frame in video_tensor:
         frame_unnormalized = unnormalize_img(video_frame.permute(1, 2, 0).numpy(), mean, std)
         frames.append(frame_unnormalized)
-    kargs = {"duration": 0.25}
+    kargs = {"duration": 6}
     imageio.mimsave(filename, frames, "GIF", **kargs)
     return filename
 

@@ -24,12 +24,10 @@ class VideoMambaEncoder(EncoderAbstract):
         torch.cuda.manual_seed(config.SEED)
         torch.cuda.manual_seed_all(config.SEED)
 
-        if config.MODEL.ENCODER.PRETRAINED:
-            pretrained = True
-
         kwargs = {
-            "pretrained": pretrained,
+            "pretrained": config.MODEL.ENCODER.PRETRAINED,
             "num_classes": 0, # not config.MODEL.HEAD.NUM_CLASSES because we have our own head
+            "num_frames": config.DATA.NUM_SAMPLED_FRAMES,
             "img_size": config.DATA.IMG_SIZE,
             "norm_epsilon": config.TRAIN.OPTIM.EPS,
             "device": "cuda" if config.TRAIN.ACCELERATOR == "auto" else config.TRAIN.ACCELERATOR,

@@ -17,7 +17,7 @@ WEIGHT = "runs/cls_svt_charades_s224_f8_exp0/epoch=6-val_mAP=0.093.ckpt"
 
 parser = argparse.ArgumentParser(description="Test a video model")
 parser.add_argument("--config", help="The config file", 
-                        default="src/config/cls_svt_ucf101_s224_f8_exp0.yaml")
+                        default="src/config/cls_svt_charades_s224_f8_exp0.yaml")
 
 args = parser.parse_args()
 
@@ -66,20 +66,24 @@ def test():
                      accelerator=config.TRAIN.ACCELERATOR, devices=config.TRAIN.DEVICES)
 
     # training
-    results = trainer.validate(model=lit_module, dataloaders=valid_loader)
-    # results = trainer.predict(lit_module, valid_loader)
+    # results = trainer.validate(model=lit_module, dataloaders=valid_loader)
+    results = trainer.predict(lit_module, valid_loader)
 
-    print(results)
+    # print(results)
 
-    # preds = []
-    # gts = []
-    # for p, g in results:
-    #     preds.append(p)
-    #     gts.append(g)
-    # preds  = torch.cat(preds)
-    # gts = torch.cat(gts)
-    # torch.save( preds, "preds.pth")
-    # torch.save(gts, "gts.pth")
+    inputs = []
+    preds = []
+    gts = []
+    for X, p, g in results:
+        inputs.append(X)
+        preds.append(p)
+        gts.append(g)
+    preds  = torch.cat(preds)
+    gts = torch.cat(gts)
+    inputs = torch.cat(inputs)
+    torch.save( inputs, "inputs.pth")
+    torch.save( preds, "preds.pth")
+    torch.save(gts, "gts.pth")
 
 if __name__ == '__main__':
     test()

@@ -12,3 +12,4 @@ triton
 wandb==0.17.0
 lightning==2.2.4
 opencv-python==4.5.5
+rarfile==4.2

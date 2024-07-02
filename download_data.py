@@ -1,7 +1,9 @@
 import os
 import sys
+import glob
 import tarfile # for extracting tar files
 import zipfile # for unzipping files
+import rarfile
 import requests # for downloading files
 import shutil # for moving files
 
@@ -24,10 +26,17 @@ def download_file(url, local_filename):
             print("ERROR: Something went wrong")
     print(f'Download complete: {local_filename}')
 
-def unzip_file(zip_file_path, extract_to_path):
+def unzip_file(zip_file_path, extract_to_path, compressed_type='zip'):
     print(f"Unzipping {zip_file_path} to {extract_to_path}")
-    with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
-        zip_ref.extractall(extract_to_path)
+    if compressed_type == 'zip':
+        with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
+            zip_ref.extractall(extract_to_path)
+    elif compressed_type == 'rar':
+        with rarfile.RarFile(zip_file_path) as rf:
+            # Extract all files to the output directory
+            rf.extractall(path=extract_to_path)
+    else:
+        raise ValueError(f'No such compressed type: {compressed_type}')
     print(f'Extraction complete: Files extracted to {extract_to_path}')
 
 def move_files_to_target(src_folder, target_folder):
@@ -50,6 +59,7 @@ def get_args() -> ArgumentParser:
 
     parser.add_argument('-ucf', action='store_true', help='Set this flag to True if -ucf is present')
     parser.add_argument('-charades', action='store_true', help='Set this flag to True if -charades is present')
+    parser.add_argument('-hmdb51', action='store_true', help='Set this flag to True if -hmdb51 is present')
     
     # Check if no arguments were provided
     if len(sys.argv) == 1:
@@ -69,7 +79,8 @@ def download_ucf101() -> None:
         t.extractall("data/raw/")
 
 
-def download_url_dataset(url: str, final_dir: str = "data/raw", remove_zip: bool = True):
+def download_url_dataset(url: str, final_dir: str = "data/raw", 
+                        remove_zip: bool = True, compressed_type='zip'):
     # download the zip file
     zip_path = os.path.join(final_dir, os.path.basename(url))
     if not os.path.exists(zip_path):
@@ -77,7 +88,7 @@ def download_url_dataset(url: str, final_dir: str = "data/raw", remove_zip: bool
 
     # extract the zip file
     os.makedirs(final_dir, exist_ok=True)
-    unzip_file(zip_path, final_dir)
+    unzip_file(zip_path, final_dir, compressed_type=compressed_type)
 
     # Remove the leftover zip file
     if remove_zip:
@@ -97,7 +108,7 @@ if __name__ == "__main__":
             print("UCF101 dataset setup complete.")
     
     if args.charades:
-        if os.path.exists("data/raw/Charades/videos") and not os.listdir("data/raw/Charades/videos"): 
+        if os.path.exists("data/raw/Charades/videos") and os.listdir("data/raw/Charades/videos"): 
             print("Charades dataset already downloaded.")
         else:
             print("...Obtaining Charades annotations...")
@@ -117,3 +128,32 @@ if __name__ == "__main__":
             os.rename("data/raw/Charades/Charades_v1_480", "data/raw/Charades/videos")
             print("...Charades dataset setup complete...")
         
+    if args.hmdb51:
+        if os.path.exists("data/raw/HMDB51/HMDB51_videos") and os.listdir("data/raw/HMDB51/HMDB51_videos"): 
+            print("HMDB51 dataset already downloaded.")
+        else:
+            print("...Obtaining HMDB51 videos...")
+            os.makedirs("data/raw/HMDB51", exist_ok=True)
+            download_url_dataset(
+                url = 'http://serre-lab.clps.brown.edu/wp-content/uploads/2013/10/hmdb51_org.rar',
+                final_dir = "data/raw/HMDB51",
+                remove_zip = False,
+                compressed_type='rar')
+
+            os.makedirs("data/raw/HMDB51/HMDB51_videos")
+            for path in tqdm(glob.glob("data/raw/HMDB51/*.rar")):
+                if "hmdb51_org.rar" in path:
+                    continue
+
+                with rarfile.RarFile(path) as rf:
+                    rf.extractall(path="data/raw/HMDB51/HMDB51_videos")
+
+            # download fold split metadata
+            download_url_dataset(
+                url = 'http://serre-lab.clps.brown.edu/wp-content/uploads/2013/10/test_train_splits.rar',
+                final_dir = "data/raw/HMDB51",
+                remove_zip = True,
+                compressed_type='rar')
+
+            # remove zip file
+            os.system("rm data/raw/HMDB51/*.rar")
