@@ -29,13 +29,18 @@ def classification_collate_fn(config):
         pixel_values = torch.stack(
             [example["video"].permute(1, 0, 2, 3) for example in examples]
         )
-        if "video_label" in examples[0].keys(): # multilabel
-            num_output_logits = config.MODEL.HEAD.NUM_CLASSES
-            # make 0-1 matrix of shape (batch size x num labels)
-            labels = torch.zeros((len(examples), num_output_logits))
-            for i, example in enumerate(examples):
-                labels[i, example['video_label']] = 1
-        else: # single class label
+        if "video_label" in examples[0].keys():  # if charades
+            if config.MODEL.HEAD.MULTI_LABEL:  # multilabel
+                num_output_logits = config.MODEL.HEAD.NUM_CLASSES
+                # make 0-1 matrix of shape (batch size x num labels)
+                labels = torch.zeros((len(examples), num_output_logits))
+                for i, example in enumerate(examples):
+                    labels[i, example['video_label']] = 1
+            else:  # single label
+                labels = torch.tensor([example['video_label'] for example in examples])
+        else:  # if ucf
             labels = torch.tensor([example["label"] for example in examples])
+
+        # Let labels be of shape (N,), holding only int labels
         return pixel_values, labels
     return inner_collate_fn
