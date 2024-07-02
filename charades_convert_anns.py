@@ -161,7 +161,7 @@ for phase in ['train', 'test']:
 
     # Finally, it's time to create the true dataframe we will use.
     print("Creating per-frame annotations (this may take a while)...")
-    frame_cls_anns, frame_cap_anns = create_frame_anns(video_anns, PATH_TO_FRAME_DATA)
+    frame_anns = create_frame_anns(video_anns, PATH_TO_FRAME_DATA)
 
     print("Converting to dataframe...")
     frame_anns_df = pd.DataFrame(frame_anns, columns=['original_vido_id', 'video_id',
@@ -170,9 +170,4 @@ for phase in ['train', 'test']:
     # print(frame_anns_df.head())
 
     print("Saving annotations to csv...")
-    if not SAMPLES:
-        frame_cls_anns_df.to_csv(f'{PATH_TO_CHARADES_ROOT}/Charades_per-frame_annotations_action_cls_{phase}.csv', sep=' ', index=False)
-        frame_cap_anns_df.to_csv(f'{PATH_TO_CHARADES_ROOT}/Charades_per-frame_annotations_captioning_{phase}.csv', sep=' ', index=False)
-    else:
-        frame_cls_anns_df.to_csv(f'{PATH_TO_CHARADES_ROOT}/Charades_per-frame_annotations_action_cls_{phase}_samples.csv', sep=' ', index=False)
-        frame_cap_anns_df.to_csv(f'{PATH_TO_CHARADES_ROOT}/Charades_per-frame_annotations_captioning_{phase}_samples.csv', sep=' ', index=False)
+    frame_anns_df.to_csv(f'{PATH_TO_CHARADES_ROOT}/Charades_per-frame_annotations_{phase}.csv', sep=' ', index=False)
