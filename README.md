@@ -85,6 +85,7 @@ python download_data.py -ucf
 python download_data.py -charades
 cd data/raw/
 mkdir Charades_frames
+cd Charades_frames
 wget https://ai2-public-datasets.s3-us-west-2.amazonaws.com/charades/Charades_v1_rgb.tar
 tar -xvf Charades_v1_rgb.tar
 cd ../../..
