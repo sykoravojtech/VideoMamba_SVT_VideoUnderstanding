@@ -164,6 +164,7 @@ checkpoints/*
 !checkpoints/README.md
 data/raw/*
 data/processed/*
+data/encodings/*
 runs/*
 pytorchvideo
 wandb

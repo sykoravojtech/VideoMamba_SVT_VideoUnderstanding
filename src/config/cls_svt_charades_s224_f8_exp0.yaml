@@ -22,6 +22,7 @@ MODEL:
   LOSS: BCEWithLogitsLoss
 
 DATA:
+  ENCODING_DIR: data/encodings/cls_svt_charades/ # path to precomputed hidden states from the encoder
   DATASET: charades_action_classification
   ROOT_PATH: data/raw/Charades
   TRAIN_CSV: Charades_per-frame_annotations_fps1.5_action_cls_train.csv

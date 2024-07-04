@@ -23,32 +23,33 @@ MODEL:
   LOSS: BCEWithLogitsLoss
 
 DATA:
+  ENCODING_DIR: data/encodings/cls_vm_charades/ # path to precomputed hidden states from the encoder
   DATASET: charades_action_classification
   ROOT_PATH: data/raw/Charades
-  TRAIN_CSV: Charades_per-frame_annotations_action_cls_train.csv
-  TEST_CSV: Charades_per-frame_annotations_action_cls_test.csv
+  TRAIN_CSV: Charades_per-frame_annotations_fps1.5_action_cls_train.csv
+  TEST_CSV: Charades_per-frame_annotations_fps1.5_action_cls_test.csv
   IMG_SIZE: 224
   NUM_SAMPLED_FRAMES: 16
-  CLIP_DURATION: 30
-  FPS: 24
+  CLIP_DURATION: 11 # we want about 16 frames, fps = 1.5 -> set clip duration to 11s
+  FPS: 1.5
   MEAN: [0.45, 0.45, 0.45]
   STD: [0.225, 0.225, 0.225]
   NUM_WORKERS: 16
 
 TRAIN:
   FREEZE_ENCODER: True
-  NUM_EPOCHS: 30
+  NUM_EPOCHS: 100
   BATCH_SIZE: 32
   OPTIM:
     TYPE: AdamW
-    INIT_LEARNING_RATE: 0.0001
+    INIT_LEARNING_RATE: 0.0005
     MIN_LEARNING_RATE: 0.000001
     EPS: 0.000001
     BETAS: [0.9, 0.999]
-    MAX_LR_STEPS: 100
+    LR_MILESTONES: [100, 200]
   LOG_STEPS: 50
   ACCELERATOR: auto
   DEVICES: auto
-  PRECISION: 16
+  PRECISION: 32
   BEST_CHECKPOINT_BY: val_mAP
   COMPUTE_METRIC_AT_TRAIN_TIME: True

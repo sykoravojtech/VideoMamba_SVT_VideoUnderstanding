@@ -105,11 +105,14 @@ python train.py
 
 # training multi-action classification on Charades dataset
 python train.py --config src/config/cls_svt_charades_s224_f8_exp0.yaml
+# head-only finetuning
+python train_cls_head.py --config src/config/cls_svt_charades_s224_f8_exp0.yaml
 
 # training captioning on Charades dataset
 python train.py --config src/config/cap_svt_charades_s224_f8_exp0.yaml
 ```
 Visualize training log at https://wandb.ai/PracticalML2024/PracticalML
+
 
 ## License
 Distributed under the MIT License. See `LICENSE` for more information.
