@@ -13,11 +13,22 @@ from src.models import create_model
 from src.datasets import create_dataset, classification_collate_fn, captioning_collate_fn
 from src.utils.general import set_deterministic
 
-parser = argparse.ArgumentParser(description="Train a video model")
-parser.add_argument("-c", "--config", help="The config file", 
-                        default="src/config/cls_svt_ucf101_s224_f8_exp0.yaml")
+def create_parser():
+    parser = argparse.ArgumentParser(description="Train a video model")
+    parser.add_argument("-c", "--config", help="The config file", 
+                            default="src/config/cls_svt_ucf101_s224_f8_exp0.yaml")
+    # add a parser argument --init_lr which is default zero
+    parser.add_argument("--init_lr", type=float, default=0.0)
 
-args = parser.parse_args()
+    args = parser.parse_args()
+    return args
+
+def set_params(args, config):
+    if args.init_lr != 0:
+        config.TRAIN.OPTIM.INIT_LEARNING_RATE = args.init_lr
+        print(f"Setting initial learning rate to {args.init_lr}")
+
+    return config
 
 def get_collate_fn(config: CfgNode):
     if config.MODEL.TYPE == 'classification':
@@ -27,12 +38,14 @@ def get_collate_fn(config: CfgNode):
     else:
         raise ValueError("Invalid model type")
 
-def train():
+def train(args):
     """Train a new model"""
 
     # Load config
     config = CfgNode.load_yaml_with_base(args.config)
     config = CfgNode(config)
+    config = set_params(args, config)
+    print(config)
 
     # make reproducible
     set_deterministic(config.SEED)
@@ -89,4 +102,5 @@ def train():
    
 
 if __name__ == '__main__':
-    train()
+    args = create_parser()
+    train(args)
