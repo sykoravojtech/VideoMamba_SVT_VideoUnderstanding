@@ -86,6 +86,7 @@ class ClassificationDataset(Dataset):
 
 def train(args):
     """Train a new model"""
+    print(f"CPU NUM = {os.cpu_count()}")
 
     # Load config
     config = CfgNode.load_yaml_with_base(args.config)

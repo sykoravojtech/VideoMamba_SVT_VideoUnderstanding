@@ -15,9 +15,9 @@ MODEL:
 
   HEAD:
     TYPE: MLP
-    LAYERS: [128,128]
-    DROPOUT: 0.0  # Optional: Dropout probability
-    LAYER_NORM: True  # Optional: Use layer normalization
+    LAYERS: [512,256,256]
+    DROPOUT: 0.2  # Optional: Dropout probability
+    LAYER_NORM: False  # Optional: Use layer normalization
     NUM_CLASSES: 157
     MULTI_LABEL: True
     THRESHOLD: 0.5
@@ -44,9 +44,9 @@ TRAIN:
   BATCH_SIZE: 32
   OPTIM:
     TYPE: AdamW
-    INIT_LEARNING_RATE: 0.0005
-    MIN_LEARNING_RATE: 0.000001
-    EPS: 0.000001
+    INIT_LEARNING_RATE: 1e-4
+    MIN_LEARNING_RATE: 1e-6
+    EPS: 1e-6
     BETAS: [0.9, 0.999]
     LR_MILESTONES: [150, 300]
   LOG_STEPS: 50
