@@ -48,6 +48,9 @@ def set_params(args, config):
         config.MODEL.HEAD.LAYER_NORM = True
         print(f"Setting MLP layer norm to True")
         config.EXPERIMENT += "_ln"
+    if config.MODEL.USE_CLASS_WEIGHTS:
+        print("Using class weights")
+        config.EXPERIMENT += "_cw"
 
     return config
 
