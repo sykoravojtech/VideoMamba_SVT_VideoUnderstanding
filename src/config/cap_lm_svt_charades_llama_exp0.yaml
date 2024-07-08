@@ -1,5 +1,5 @@
 PROJECT_NAME: PracticalML
-EXPERIMENT: cap_svt_charades_s224_f8_exp0
+EXPERIMENT: cap_lm_svt_charades_llama_exp0
 OUTPUT_DIR: ./runs
 WANDB_KEY: 547d969d74fa2db0a0eb6a8b49490f5fddccfc04
 SEED: 42
@@ -11,11 +11,12 @@ MODEL:
     PRETRAINED: checkpoints/kinetics400_vitb_ssl.pth
     HIDDEN_SIZE: 768
     RETURN_ALL_HIDDEN: False
-
+  LINEAR_MAP: True
   HEAD:
     TYPE: Generative
-    LANGUAGE_MODEL: gpt2
+    LANGUAGE_MODEL: meta-llama/Llama-2-7b-hf
     MAX_TOKENS: 128
+    FROZEN: True
 
   LOSS: CrossEntropyLoss
 
@@ -30,7 +31,7 @@ DATA:
   CLIP_DURATION: 30
   MEAN: [0.45, 0.45, 0.45]
   STD: [0.225, 0.225, 0.225]
-  NUM_WORKERS: 16
+  NUM_WORKERS: 4
 
 TRAIN:
   FREEZE_ENCODER: True
@@ -38,7 +39,7 @@ TRAIN:
   BATCH_SIZE: 16
   OPTIM:
     TYPE: AdamW
-    INIT_LEARNING_RATE: 0.0002
+    INIT_LEARNING_RATE: 0.001
     MIN_LEARNING_RATE: 0.000001
     EPS: 0.000001
     BETAS: [0.9, 0.999]

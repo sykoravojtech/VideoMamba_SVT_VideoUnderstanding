@@ -12,21 +12,20 @@ import wandb
 
 from src.datasets import create_dataset, classification_collate_fn, captioning_collate_fn
 from src.utils.general import set_deterministic
-from src.models.captioning_model import VideoCaptioningModel
+from src.models.captioning_model_linear_map import VideoCaptioningModelLinearMap
 from src.models.encoders import EncoderAbstract
 
 
 
 parser = argparse.ArgumentParser(description="Train a video model")
 parser.add_argument("-c", "--config", help="The config file", 
-                        default="src/config/cap_lm_svt_charades_s224_f8_exp0.yaml")
+                        default="src/config/cap_lm_svt_charades_llama_exp0.yaml")
 
 args = parser.parse_args()
 
-class VideoCaptioningModelHead(VideoCaptioningModel):
+class VideoCaptioningModelHead(VideoCaptioningModelLinearMap):
     def __init__(self, config: CfgNode) -> None:
         super().__init__(config)
-
 
 def get_collate_fn(config: CfgNode):
     if config.MODEL.TYPE == 'classification':
@@ -64,9 +63,7 @@ def train():
 
     # Wandb init
     wandb.login(key=config.WANDB_KEY)
-    wandb.init(project=config.PROJECT_NAME,
-                name=config.EXPERIMENT,
-                group=config.MODEL.TYPE)
+    wandb.init(project=config.PROJECT_NAME,            name=config.EXPERIMENT,         group=config.MODEL.TYPE)
 
     # create dataset
     # dataset = create_dataset(config)

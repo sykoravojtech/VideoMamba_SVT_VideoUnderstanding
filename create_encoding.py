@@ -54,21 +54,23 @@ def train():
     lit_module = lit_module.to("cuda").eval()
 
     # callbacks
-    output_dir = os.path.join("data/encodings_/")
+    output_dir = os.path.join("data/encodings_2/")
     os.makedirs(output_dir, exist_ok=True)
 
     with torch.no_grad():
         for i, (X, y) in tqdm(enumerate(train_loader)):
+            X = X.reshape((batch_size * config.DATA.NUM_SAMPLED_FRAMES_MULT, 8, *X.shape[2:]))
             X = X.to("cuda")
             enc = lit_module.encoder(X)
-            torch.save(enc.cpu().detach(), os.path.join(output_dir, f"train_x_{i}.pt"))
+            torch.save(enc.cpu().detach().squeeze(), os.path.join(output_dir, f"train_x_{i}.pt"))
             torch.save(y, os.path.join(output_dir, f"train_y_{i}.pt"))
 
     with torch.no_grad():
         for i, (X, y) in tqdm(enumerate(valid_loader)):
+            X = X.reshape((batch_size * config.DATA.NUM_SAMPLED_FRAMES_MULT, 8, *X.shape[2:]))
             X = X.to("cuda")
             enc = lit_module.encoder(X)
-            torch.save(enc.cpu().detach(), os.path.join(output_dir, f"val_x_{i}.pt"))
+            torch.save(enc.cpu().detach().squeeze(), os.path.join(output_dir, f"val_x_{i}.pt"))
             torch.save(y, os.path.join(output_dir, f"val_y_{i}.pt"))
    
 

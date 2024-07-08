@@ -7,7 +7,7 @@ from src.utils.visualizations import investigate_video, display_gif
 
 parser = argparse.ArgumentParser(description="Train a video model")
 parser.add_argument("--config", help="The config file", 
-                        default="src/config/cls_svt_ucf101_s224_f8_exp0.yaml")
+                        default="src/config/cap_svt_ucf101_s224_f8_exp0.yaml")
 args = parser.parse_args()
 
 def vis():
@@ -22,8 +22,7 @@ def vis():
     dataset_name = config.DATA.DATASET
     task = config.MODEL.TYPE
     id2label = dataset.get_id2label() if task=='classification' else None
-    investigate_video(sample_video, dataset_name=dataset_name, 
-                    id2label=id2label)
+    investigate_video(sample_video, dataset_name=dataset_name, id2label=id2label)
     if id2label:
         print(len(dataset.get_id2label()))
 
