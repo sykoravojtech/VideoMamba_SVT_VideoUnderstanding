@@ -1,9 +1,5 @@
 PROJECT_NAME: PracticalML
-<<<<<<< HEAD
-EXPERIMENT: cls_vm_charades_s224_f8_exp0
-=======
 EXPERIMENT: cls_vm_charades_s224_f8_exp3
->>>>>>> 43d552fa1aec0fe441274f3952c450288c82cd6b
 OUTPUT_DIR: ./runs
 WANDB_KEY: 547d969d74fa2db0a0eb6a8b49490f5fddccfc04
 SEED: 42
