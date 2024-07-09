@@ -26,9 +26,9 @@ MODEL:
   USE_CLASS_WEIGHTS: False
 
 DATA:
-  ENCODING_DIR: ../data/encodings/cls_vm_charades/ # path to precomputed hidden states from the encoder
+  ENCODING_DIR: data/encodings/cls_vm_charades/ # path to precomputed hidden states from the encoder
   DATASET: charades_action_classification
-  ROOT_PATH: ../data/raw/Charades
+  ROOT_PATH: data/raw/Charades
   TRAIN_CSV: Charades_per-frame_annotations_fps1.5_action_cls_train.csv
   TEST_CSV: Charades_per-frame_annotations_fps1.5_action_cls_test.csv
   IMG_SIZE: 224
