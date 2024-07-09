@@ -27,9 +27,23 @@ fi
 # Change to the directory
 cd "$DIR"
 
-# Download the files
-wget -O videomamba_t16_k400_f16_res224.pth "$URL_TINY"
-wget -O videomamba_s16_k400_f16_res224.pth "$URL_SMALL"
-wget -O videomamba_m16_k400_f16_res224.pth "$URL_MIDDLE"
+# Check and download the files if they do not exist
+if [ ! -f "videomamba_t16_k400_f16_res224.pth" ]; then
+  wget -O videomamba_t16_k400_f16_res224.pth "$URL_TINY"
+else
+  echo "videomamba_t16_k400_f16_res224.pth already exists. Skipping download."
+fi
 
-echo "All model checkpoints downloaded to $DIR"
+if [ ! -f "videomamba_s16_k400_f16_res224.pth" ]; then
+  wget -O videomamba_s16_k400_f16_res224.pth "$URL_SMALL"
+else
+  echo "videomamba_s16_k400_f16_res224.pth already exists. Skipping download."
+fi
+
+if [ ! -f "videomamba_m16_k400_f16_res224.pth" ]; then
+  wget -O videomamba_m16_k400_f16_res224.pth "$URL_MIDDLE"
+else
+  echo "videomamba_m16_k400_f16_res224.pth already exists. Skipping download."
+fi
+
+echo "All model checkpoints checked/downloaded to $DIR"

@@ -1,5 +1,9 @@
 PROJECT_NAME: PracticalML
+<<<<<<< HEAD
 EXPERIMENT: cls_vm_charades_s224_f8_exp0
+=======
+EXPERIMENT: cls_vm_charades_s224_f8_exp3
+>>>>>>> 43d552fa1aec0fe441274f3952c450288c82cd6b
 OUTPUT_DIR: ./runs
 WANDB_KEY: 547d969d74fa2db0a0eb6a8b49490f5fddccfc04
 SEED: 42
@@ -15,12 +19,15 @@ MODEL:
 
   HEAD:
     TYPE: MLP
-    LAYERS: [4096,4096]
+    LAYERS: [512,256,256]
+    DROPOUT: 0.2  # Optional: Dropout probability
+    LAYER_NORM: False  # Optional: Use layer normalization
     NUM_CLASSES: 157
     MULTI_LABEL: True
     THRESHOLD: 0.5
 
   LOSS: BCEWithLogitsLoss
+  USE_CLASS_WEIGHTS: True
 
 DATA:
   ENCODING_DIR: data/encodings/cls_vm_charades/ # path to precomputed hidden states from the encoder
@@ -34,19 +41,19 @@ DATA:
   FPS: 1.5
   MEAN: [0.45, 0.45, 0.45]
   STD: [0.225, 0.225, 0.225]
-  NUM_WORKERS: 16
+  NUM_WORKERS: 4
 
 TRAIN:
   FREEZE_ENCODER: True
-  NUM_EPOCHS: 100
+  NUM_EPOCHS: 300
   BATCH_SIZE: 32
   OPTIM:
     TYPE: AdamW
-    INIT_LEARNING_RATE: 0.0005
+    INIT_LEARNING_RATE: 0.0001
     MIN_LEARNING_RATE: 0.000001
     EPS: 0.000001
     BETAS: [0.9, 0.999]
-    LR_MILESTONES: [100, 200]
+    LR_MILESTONES: [300, 400]
   LOG_STEPS: 50
   ACCELERATOR: auto
   DEVICES: auto

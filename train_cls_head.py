@@ -18,12 +18,41 @@ from src.models.classification_model import VideoClassificationModel
 from src.models.encoders import EncoderAbstract
 
 
+def create_parser():
+    parser = argparse.ArgumentParser(description="Train a video model")
+    parser.add_argument("-c", "--config", help="The config file", 
+                            default="src/config/cls_svt_ucf101_s224_f8_exp0.yaml")
+    # add a parser argument --init_lr which is default zero
+    parser.add_argument("-lr", "--init_lr", type=float, default=0.0)
+    parser.add_argument("-l", "--layers", nargs="+", type=int, default=[])
+    parser.add_argument("-d", "--dropout", type=float, default=0.0)
+    parser.add_argument("-ln", "--layer_norm", action="store_true", default=False)
 
-parser = argparse.ArgumentParser(description="Train a video model")
-parser.add_argument("-c", "--config", help="The config file", 
-                        default="src/config/cls_svt_ucf101_s224_f8_exp0.yaml")
+    args = parser.parse_args()
+    return args
 
-args = parser.parse_args()
+def set_params(args, config):
+    if args.init_lr:
+        config.TRAIN.OPTIM.INIT_LEARNING_RATE = args.init_lr
+        print(f"Setting initial learning rate to {args.init_lr}")
+        config.EXPERIMENT += f"_LR{args.init_lr}"
+    if args.layers:
+        config.MODEL.HEAD.LAYERS = args.layers
+        print(f"Setting MLP layers to {args.layers}")
+        config.EXPERIMENT += f"_layers{','.join(map(str, args.layers))}"
+    if args.dropout:
+        config.MODEL.HEAD.DROPOUT = args.dropout
+        print(f"Setting MLP dropout to {args.dropout}")
+        config.EXPERIMENT += f"_dropout{args.dropout}"
+    if args.layer_norm:
+        config.MODEL.HEAD.LAYER_NORM = True
+        print(f"Setting MLP layer norm to True")
+        config.EXPERIMENT += "_ln"
+    if config.MODEL.USE_CLASS_WEIGHTS:
+        print("Using class weights")
+        config.EXPERIMENT += "_cw"
+
+    return config
 
 class VideoClassificationingModelHead(VideoClassificationModel):
     def __init__(self, config: CfgNode) -> None:
@@ -58,12 +87,15 @@ class ClassificationDataset(Dataset):
     def __getitem__(self, ind):
         return torch.load(self.x[ind]), torch.load(self.y[ind])
 
-def train():
+def train(args):
     """Train a new model"""
+    print(f"CPU NUM = {os.cpu_count()}")
 
     # Load config
     config = CfgNode.load_yaml_with_base(args.config)
     config = CfgNode(config)
+    config = set_params(args, config)
+    print(f"{config.MODEL.HEAD}")
 
     # make reproducible
     set_deterministic(config.SEED)
@@ -125,4 +157,5 @@ def train():
    
 
 if __name__ == '__main__':
-    train()
+    args = create_parser()
+    train(args)
