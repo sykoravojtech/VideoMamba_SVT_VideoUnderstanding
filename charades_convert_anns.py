@@ -22,6 +22,7 @@ DUMMY_2 = -1  # placeholder for frame_id, unused in the implementation
 
 FRAME_SAMPLING_RATE = 16 # out of FRAME_SAMPLING_RATE frames, keep 1 frame
 FINAL_FPS = np.round(FPS / FRAME_SAMPLING_RATE, 3)
+print('Target FPS after sampling:',FINAL_FPS )
 
 SAMPLES = None # Sampling some videos for demo training
 
