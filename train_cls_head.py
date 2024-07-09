@@ -27,6 +27,8 @@ def create_parser():
     parser.add_argument("-l", "--layers", nargs="+", type=int, default=[])
     parser.add_argument("-d", "--dropout", type=float, default=0.0)
     parser.add_argument("-ln", "--layer_norm", action="store_true", default=False)
+    parser.add_argument("-cw", "--use_class_weights", action="store_true", default=False)
+    parser.add_argument("-lrm", "--lr_milestones", nargs="+", type=int, default=[])
 
     args = parser.parse_args()
     return args
@@ -48,9 +50,14 @@ def set_params(args, config):
         config.MODEL.HEAD.LAYER_NORM = True
         print(f"Setting MLP layer norm to True")
         config.EXPERIMENT += "_ln"
-    if config.MODEL.USE_CLASS_WEIGHTS:
+    if args.use_class_weights:
+        config.MODEL.USE_CLASS_WEIGHTS = True
         print("Using class weights")
-        config.EXPERIMENT += "_cw"
+        config.EXPERIMENT += "_cw5"
+    if args.lr_milestones:
+        config.TRAIN.OPTIM.LR_MILESTONES = args.lr_milestones
+        print(f"Setting LR milestones to {args.lr_milestones}")
+        config.EXPERIMENT += f"_lrm{','.join(map(str, args.lr_milestones))}"
 
     return config
 
@@ -95,7 +102,7 @@ def train(args):
     config = CfgNode.load_yaml_with_base(args.config)
     config = CfgNode(config)
     config = set_params(args, config)
-    print(f"{config.MODEL.HEAD}")
+    # print(f"{config.MODEL.HEAD}")
 
     # make reproducible
     set_deterministic(config.SEED)
