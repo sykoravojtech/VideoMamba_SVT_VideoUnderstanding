@@ -22,6 +22,8 @@ parser = argparse.ArgumentParser(description="Train a video model")
 #                         default="src/config/cls_svt_charades_s224_f8_exp0.yaml")
 parser.add_argument("--config", help="The config file", 
                         default="src/config/cls_vm_charades_s224_f8_exp0.yaml")
+parser.add_argument("--weight", help="The trained weights", 
+                        default="runs/cls_vm_charades_s224_f8_exp0/epoch=38-val_mAP=0.204.ckpt")
 
 args = parser.parse_args()
 
@@ -33,7 +35,7 @@ DATA_DIR = "data/raw/Charades"
 VIDEO_DIRS = f"{DATA_DIR}/videos"
 CSV_PATH = f"{DATA_DIR}/Charades_v1_test.csv"
 # HEAD_WEIGHT = "runs/cls_svt_charades_s224_f8_exp0/epoch=14-val_mAP=0.158.ckpt"
-HEAD_WEIGHT = "runs/cls_vm_charades_s224_f8_exp0/epoch=38-val_mAP=0.204.ckpt"
+HEAD_WEIGHT = args.weight
 
 
 action_map = pd.read_csv(f"{DATA_DIR}/Charades_v1_classes_new_map.csv")
