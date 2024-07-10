@@ -301,7 +301,7 @@ class VisionMamba(nn.Module):
     # def load_pretrained(self, checkpoint_path, prefix=""):
     #     _load_weights(self, checkpoint_path, prefix)
 
-    def forward_features(self, x, inference_params=None):
+    def forward_features(self, x, inference_params=None, return_all_hiddens=False):
         # x shape: B, C, T, H, W -> permute to B,T,C,H,W
         # BATCH_SIZE, NUM_SAMPLED_FRAMES, T, TRAIN_CROP_SIZE, TRAIN_CROP_SIZE
         x = x.permute(0,2,1,3,4)
@@ -351,13 +351,14 @@ class VisionMamba(nn.Module):
             )
 
         # return only cls token
+        if return_all_hiddens:
+            return hidden_states
         return hidden_states[:, 0, :]
         # return hidden_states
 
-    def forward(self, pixel_values, inference_params=None, output_attentions=None,
-             output_hidden_states=None, return_dict=True):
+    def forward(self, pixel_values, inference_params=None, return_all_hiddens=False):
         # BATCH_SIZE, NUM_SAMPLED_FRAMES, C, TRAIN_CROP_SIZE, TRAIN_CROP_SIZE [2,16,3,224,224]
-        x = self.forward_features(pixel_values, inference_params)
+        x = self.forward_features(pixel_values, inference_params, return_all_hiddens)
         return x
 
 

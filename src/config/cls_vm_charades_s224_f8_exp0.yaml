@@ -1,5 +1,5 @@
 PROJECT_NAME: PracticalML
-EXPERIMENT: cls_vm_ch_exp5
+EXPERIMENT: cls_vm_ch_exp6
 OUTPUT_DIR: ./runs
 WANDB_KEY: 547d969d74fa2db0a0eb6a8b49490f5fddccfc04
 SEED: 42
@@ -11,7 +11,7 @@ MODEL:
     PRETRAINED: True
     MODEL_SIZE: middle # tiny, small, middle
     HIDDEN_SIZE: 576   # 192,  384,   576
-    RETURN_ALL_HIDDEN: False
+    RETURN_ALL_HIDDEN: True
 
   HEAD:
     TYPE: MLP
@@ -26,7 +26,7 @@ MODEL:
   USE_CLASS_WEIGHTS: False
 
 DATA:
-  ENCODING_DIR: data/encodings/cls_vm_charades/ # path to precomputed hidden states from the encoder
+  ENCODING_DIR: data/encodings/cls_vm_charades_all_hiddens/ # path to precomputed hidden states from the encoder
   DATASET: charades_action_classification
   ROOT_PATH: data/raw/Charades
   TRAIN_CSV: Charades_per-frame_annotations_fps1.5_action_cls_train.csv
@@ -37,7 +37,7 @@ DATA:
   FPS: 1.5
   MEAN: [0.45, 0.45, 0.45]
   STD: [0.225, 0.225, 0.225]
-  NUM_WORKERS: 4
+  NUM_WORKERS: 16
 
 TRAIN:
   FREEZE_ENCODER: True

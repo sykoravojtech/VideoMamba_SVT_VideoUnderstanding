@@ -46,7 +46,7 @@ class VideoMambaEncoder(EncoderAbstract):
             raise ValueError(f"Invalid VideoMamba model size: {config.MODEL.ENCODER.MODEL_SIZE}")
 
     def forward(self, X: torch.Tensor) -> torch.Tensor:
-        return self.model.forward(X)
+        return self.model.forward(X, return_all_hiddens=self.config.MODEL.ENCODER.RETURN_ALL_HIDDEN)
 
 """
     Check the README.md in the videomamba folder for installing cuda & C++ libraries
