@@ -11,15 +11,15 @@ MODEL:
     PRETRAINED: True
     MODEL_SIZE: middle # tiny, small, middle
     HIDDEN_SIZE: 576   # 192,  384,   576
-    RETURN_ALL_HIDDEN: False
+    RETURN_ALL_HIDDEN: True
     NUM_VISUAL_TOKENS: 3137 # Number of visual tokens' hidden states to use in the head. 
                             # If RETURN_ALL_HIDDEN is False, this is ignored.
 
   HEAD:
     TYPE: MLP
-    REDUCER_TYPE: token_wise # Options: token_wise, hidden_wise. If RETURN_ALL_HIDDEN is False, this is ignored.
-    LAYERS: [1024, 1024]
-    DROPOUT: 0.7  # Optional: Dropout probability
+    REDUCER_TYPE: weighted_hidden_wise # Options: average, weighted_token_wise, weighted_hidden_wise. If RETURN_ALL_HIDDEN is False, this is ignored.
+    LAYERS: [512, 512]
+    DROPOUT: 0.5  # Optional: Dropout probability
     LAYER_NORM: False  # Optional: Use layer normalization
     NUM_CLASSES: 157
     MULTI_LABEL: True
@@ -29,7 +29,7 @@ MODEL:
   USE_CLASS_WEIGHTS: False
 
 DATA:
-  ENCODING_DIR: data/encodings/cls_vm_charades/ # path to precomputed hidden states from the encoder
+  ENCODING_DIR: data/encodings/cls_vm_charades_all_hiddens/ # path to precomputed hidden states from the encoder
   DATASET: charades_action_classification
   ROOT_PATH: data/raw/Charades
   TRAIN_CSV: Charades_per-frame_annotations_fps1.5_action_cls_train.csv
@@ -38,14 +38,14 @@ DATA:
   NUM_SAMPLED_FRAMES: 16
   CLIP_DURATION: 11 # we want about 16 frames, fps = 1.5 -> set clip duration to 11s
   FPS: 1.5
-  MEAN: [0.485, 0.456, 0.406] # [0.45, 0.45, 0.45] 
-  STD: [0.229, 0.224, 0.225] #  [0.225, 0.225, 0.225]
-  NUM_WORKERS: 4
+  MEAN: [0.45, 0.45, 0.45]
+  STD: [0.225, 0.225, 0.225]
+  NUM_WORKERS: 16
 
 TRAIN:
   FREEZE_ENCODER: True
   NUM_EPOCHS: 300
-  BATCH_SIZE: 32
+  BATCH_SIZE: 2
   OPTIM:
     TYPE: AdamW
     INIT_LEARNING_RATE: 0.0005
