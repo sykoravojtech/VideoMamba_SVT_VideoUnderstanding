@@ -9,20 +9,32 @@ from .model_abstract import ModelAbstract
 from .encoders import create_encoder, EncoderAbstract
 from .heads import create_head, HeadAbstract
 from ..utils.metrics import compute_multilabel_mAP
+import os
+
+"""
+class 0 - positive 635, negative sum of rest
+cls weights vector size 157
+
+try: 
+    negative/positive
+    all 5s 10s more than 2s
+    torch.load for .pt
+    then concatenate all of them and obtain n x 157 
+"""
 
 def calc_class_weights(class_counts: List[int]) -> torch.tensor:
     """
         Calculate class weights for imbalanced dataset
     """
-    class_counts = torch.tensor(class_counts, dtype=torch.float32)
-    total_samples = torch.sum(class_counts)
+    total_samples = torch.sum(torch.tensor(class_counts))
     num_classes = len(class_counts)
 
     # Compute class weights as the inverse of class frequency
-    class_weights = total_samples / (num_classes * class_counts)
-
-    # Normalize weights to have a maximum of 1 (optional)
-    class_weights = class_weights / torch.max(class_weights)
+    class_weights = []
+    for i in range(num_classes):
+        positive = class_counts[i]
+        negative = total_samples - positive
+        class_weights.append(negative / positive)    
     
     return torch.tensor(class_weights, dtype=torch.float32)
 
@@ -52,12 +64,14 @@ charades_class_counts_test = [
 ]
 charades_cls_weights_train = calc_class_weights(charades_class_counts_train)
 # charades_cls_weights_test = calc_class_weights(charades_class_counts_test)
-CLASS_WEIGHTS = charades_cls_weights_train
+# CLASS_WEIGHTS = charades_cls_weights_train
+CLASS_WEIGHTS = torch.ones(len(charades_class_counts_train))*5
 # print(f"{CLASS_WEIGHTS=}")
 
 class VideoClassificationModel(ModelAbstract):
     def __init__(self, config: CfgNode) -> None:
         super().__init__(config)
+        # self.compute_cls_weights()
 
     def create_encoder(self) -> EncoderAbstract:
         return create_encoder(self.config)
@@ -95,4 +109,12 @@ class VideoClassificationModel(ModelAbstract):
             all_preds = torch.argmax(all_probas, axis=1)
             acc = float(acc_calculator(all_preds, all_labels))
             return {'accuracy': acc}
+
+    # def compute_cls_weights(self) -> torch.tensor:
+    #     """
+    #         Calculate class weights for imbalanced dataset
+    #     """
+    #     print("==> Calculating class weights")
+    #     # for filename in self.config.DATA.ENCODING_DIR save the names train_y_*.pt
+    #     train_y_files = [filename for filename in os.listdir(self.config.DATA.ENCODING_DIR) if filename.startswith("train_y_")]
 

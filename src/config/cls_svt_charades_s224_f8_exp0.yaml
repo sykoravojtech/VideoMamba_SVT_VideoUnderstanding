@@ -14,7 +14,9 @@ MODEL:
 
   HEAD:
     TYPE: MLP
-    LAYERS: [4096,4096]
+    LAYERS: [1024, 1024]
+    DROPOUT: 0.7  # Optional: Dropout probability
+    LAYER_NORM: False  # Optional: Use layer normalization
     NUM_CLASSES: 157
     MULTI_LABEL: True
     THRESHOLD: 0.5
@@ -37,7 +39,7 @@ DATA:
 
 TRAIN:
   FREEZE_ENCODER: True
-  NUM_EPOCHS: 50
+  NUM_EPOCHS: 300
   BATCH_SIZE: 8
   OPTIM:
     TYPE: AdamW
@@ -45,7 +47,7 @@ TRAIN:
     MIN_LEARNING_RATE: 0.000001
     EPS: 0.000001
     BETAS: [0.9, 0.999]
-    LR_MILESTONES: [100, 200]
+    LR_MILESTONES: [250, 400]
   LOG_STEPS: 50
   ACCELERATOR: auto
   DEVICES: auto

@@ -15,8 +15,8 @@ MODEL:
 
   HEAD:
     TYPE: MLP
-    LAYERS: [4096, 4096]
-    DROPOUT: 0.5  # Optional: Dropout probability
+    LAYERS: [1024, 1024]
+    DROPOUT: 0.7  # Optional: Dropout probability
     LAYER_NORM: False  # Optional: Use layer normalization
     NUM_CLASSES: 157
     MULTI_LABEL: True
@@ -26,17 +26,17 @@ MODEL:
   USE_CLASS_WEIGHTS: False
 
 DATA:
-  ENCODING_DIR: ../data/encodings/cls_vm_charades/ # path to precomputed hidden states from the encoder
+  ENCODING_DIR: data/encodings/cls_vm_charades/ # path to precomputed hidden states from the encoder
   DATASET: charades_action_classification
-  ROOT_PATH: ../data/raw/Charades
+  ROOT_PATH: data/raw/Charades
   TRAIN_CSV: Charades_per-frame_annotations_fps1.5_action_cls_train.csv
   TEST_CSV: Charades_per-frame_annotations_fps1.5_action_cls_test.csv
   IMG_SIZE: 224
   NUM_SAMPLED_FRAMES: 16
   CLIP_DURATION: 11 # we want about 16 frames, fps = 1.5 -> set clip duration to 11s
   FPS: 1.5
-  MEAN: [0.45, 0.45, 0.45]
-  STD: [0.225, 0.225, 0.225]
+  MEAN: [0.485, 0.456, 0.406] # [0.45, 0.45, 0.45] 
+  STD: [0.229, 0.224, 0.225] #  [0.225, 0.225, 0.225]
   NUM_WORKERS: 4
 
 TRAIN:
