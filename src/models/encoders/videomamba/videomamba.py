@@ -224,11 +224,13 @@ class VisionMamba(nn.Module):
             # fc_drop_rate=0., 
             device=None,
             dtype=None,
+            return_hidden=False
         ):
         factory_kwargs = {"device": device, "dtype": dtype} # follow MambaLMHeadModel
         super().__init__()
         self.residual_in_fp32 = residual_in_fp32
         self.fused_add_norm = fused_add_norm
+        self.return_hidden = return_hidden
 
         # pretrain parameters
         self.num_classes = num_classes
@@ -351,8 +353,10 @@ class VisionMamba(nn.Module):
             )
 
         # return only cls token
-        return hidden_states[:, 0, :]
-        # return hidden_states
+        if not self.return_hidden:
+            return hidden_states[:, 0, :]
+        else:
+            return hidden_states
 
     def forward(self, pixel_values, inference_params=None, output_attentions=None,
              output_hidden_states=None, return_dict=True):

@@ -43,34 +43,44 @@ def train():
     num_workers = config.DATA.NUM_WORKERS
     collate_fn = get_collate_fn(config)
     train_loader = DataLoader(train_dataset,batch_size=batch_size,
-                                shuffle=False,pin_memory=True,num_workers=num_workers,collate_fn=collate_fn,prefetch_factor=4)
+                                shuffle=False,
+                                # pin_memory=True,
+                                num_workers=num_workers,
+                                collate_fn=collate_fn,
+                                prefetch_factor=8)
     valid_loader = DataLoader(val_dataset,batch_size=batch_size,
                                 num_workers=num_workers,
-                                pin_memory=True,
+                                # pin_memory=True,
                                 shuffle=False,
-                                collate_fn=collate_fn,prefetch_factor=4)
+                                collate_fn=collate_fn,
+                                prefetch_factor=8)
     # crete model
-    lit_module = create_model(config)
-    lit_module = lit_module.to("cuda").eval()
+    # lit_module = create_model(config)
+    # lit_module = lit_module.to("cuda").eval()
 
     # callbacks
-    output_dir = os.path.join("data/encodings_/")
+    output_dir = os.path.join("data/inp_64_int/")
     os.makedirs(output_dir, exist_ok=True)
+
 
     with torch.no_grad():
         for i, (X, y) in tqdm(enumerate(train_loader)):
-            X = X.to("cuda")
-            enc = lit_module.encoder(X)
-            torch.save(enc.cpu().detach(), os.path.join(output_dir, f"train_x_{i}.pt"))
+            # X = X.reshape((batch_size * config.DATA.NUM_SAMPLED_FRAMES_MULT, config.DATA.NUM_SAMPLED_FRAMES, *X.shape[2:]))
+            # X = X.to("cuda")
+            # enc = lit_module.encoder(X)
+            # torch.save(enc.cpu().detach().squeeze(), os.path.join(output_dir, f"train_x_{i}.pt"))
+            # torch.save(y, os.path.join(output_dir, f"train_y_{i}.pt"))
+            torch.save(X[0].to(torch.uint8), os.path.join(output_dir, f"train_x_{i}.pt"))
             torch.save(y, os.path.join(output_dir, f"train_y_{i}.pt"))
 
-    with torch.no_grad():
         for i, (X, y) in tqdm(enumerate(valid_loader)):
-            X = X.to("cuda")
-            enc = lit_module.encoder(X)
-            torch.save(enc.cpu().detach(), os.path.join(output_dir, f"val_x_{i}.pt"))
+            # X = X.reshape((batch_size * config.DATA.NUM_SAMPLED_FRAMES_MULT, config.DATA.NUM_SAMPLED_FRAMES, *X.shape[2:]))
+            # X = X.to("cuda")
+            # enc = lit_module.encoder(X)
+            # torch.save(enc.cpu().detach().squeeze(), os.path.join(output_dir, f"val_x_{i}.pt"))
+            # torch.save(y, os.path.join(output_dir, f"val_y_{i}.pt"))
+            torch.save(X[0].to(torch.uint8), os.path.join(output_dir, f"val_x_{i}.pt"))
             torch.save(y, os.path.join(output_dir, f"val_y_{i}.pt"))
-   
 
 if __name__ == '__main__':
     train()

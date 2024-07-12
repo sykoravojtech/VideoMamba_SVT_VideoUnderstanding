@@ -39,7 +39,7 @@ def create_gif(video_tensor, filename,  mean, std):
     for video_frame in video_tensor:
         frame_unnormalized = unnormalize_img(video_frame.permute(1, 2, 0).numpy(), mean, std)
         frames.append(frame_unnormalized)
-    kargs = {"duration": 0.25}
+    kargs = {"fps": 1}
     imageio.mimsave(filename, frames, "GIF", **kargs)
     return filename
 

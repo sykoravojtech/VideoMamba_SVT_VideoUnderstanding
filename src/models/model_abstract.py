@@ -19,8 +19,8 @@ class ModelAbstract(abc.ABC, LightningModule):
         super().__init__()
         self.config = config
         self.encoder = self.create_encoder()
-        if self.config.TRAIN.FREEZE_ENCODER:
-            freeze_subnet(self.encoder)
+        # if self.config.TRAIN.FREEZE_ENCODER:
+        #     freeze_subnet(self.encoder)
         self.head = self.create_head()
         # save hyper-parameters to self.hparamsm auto-logged by wandb
         self.save_hyperparameters()
