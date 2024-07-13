@@ -28,11 +28,11 @@ class CaptioningDataset(Dataset):
         self.std = torch.tensor(std)
         self.frame_skip = frame_skip
         if train:
-            self.x = sorted(glob("data/inp_64_int/train_x_*.pt"))
-            self.y = sorted(glob("data/inp_64_int/train_y_*.pt"))
+            self.x = sorted(glob("data/encodings/inp_64_int/train_x_*.pt"))
+            self.y = sorted(glob("data/encodings/inp_64_int/train_y_*.pt"))
         else:
-            self.x = sorted(glob("data/inp_64_int/val_x_*.pt"))
-            self.y = sorted(glob("data/inp_64_int/val_y_*.pt"))
+            self.x = sorted(glob("data/encodings/inp_64_int/val_x_*.pt"))
+            self.y = sorted(glob("data/encodings/inp_64_int/val_y_*.pt"))
         
     def __len__(self):
         return len(self.x)
@@ -94,7 +94,7 @@ def train():
                                 pin_memory=True,drop_last=False,)
     # crete model
     lit_module = VideoCaptioningModel(config)
-    lit_module.encoder.vit.time_embed = nn.Parameter(torch.zeros(1, 16, 768))
+    lit_module.encoder.vit.time_embed = torch.nn.Parameter(torch.concat([lit_module.encoder.vit.time_embed.data]*4, axis=1))
 
     # callbacks
     output_dir = os.path.join(config.OUTPUT_DIR, config.EXPERIMENT)
