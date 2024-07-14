@@ -93,8 +93,8 @@ def train():
                                 num_workers=num_workers,
                                 pin_memory=True,drop_last=False,)
     # crete model
-    lit_module = VideoCaptioningModel(config)
-    lit_module.encoder.vit.time_embed = torch.nn.Parameter(torch.concat([lit_module.encoder.vit.time_embed.data]*4, axis=1))
+    lit_module = VideoCaptioningModel_(config)
+    # lit_module.encoder.vit.time_embed = torch.nn.Parameter(torch.concat([lit_module.encoder.vit.time_embed.data]*4, axis=1))
 
     # callbacks
     output_dir = os.path.join(config.OUTPUT_DIR, config.EXPERIMENT)

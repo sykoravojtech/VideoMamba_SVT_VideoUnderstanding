@@ -1,5 +1,5 @@
 PROJECT_NAME: PracticalML
-EXPERIMENT: cap_vm_charades_vm_f8_exp0_16_train
+EXPERIMENT: cap_vm_charades_s224_f8_exp0_16_train_all
 OUTPUT_DIR: ./runs
 WANDB_KEY: 547d969d74fa2db0a0eb6a8b49490f5fddccfc04
 SEED: 42
@@ -11,7 +11,7 @@ MODEL:
     PRETRAINED: True
     MODEL_SIZE: middle # tiny, small, middle
     HIDDEN_SIZE: 576   # 192,  384,   576
-    RETURN_ALL_HIDDEN: False
+    RETURN_ALL_HIDDEN: True
 
   HEAD:
     TYPE: Generative

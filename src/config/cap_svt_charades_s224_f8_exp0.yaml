@@ -1,5 +1,5 @@
 PROJECT_NAME: PracticalML
-EXPERIMENT: cap_svt_charades_s224_f8_exp_32_train
+EXPERIMENT: cap_svt_charades_s224_f8_exp_32_train_all
 OUTPUT_DIR: ./runs
 WANDB_KEY: 547d969d74fa2db0a0eb6a8b49490f5fddccfc04
 SEED: 42
@@ -10,7 +10,7 @@ MODEL:
     TYPE: VideoTransformer
     PRETRAINED: checkpoints/kinetics400_vitb_ssl.pth
     HIDDEN_SIZE: 768
-    RETURN_ALL_HIDDEN: False
+    RETURN_ALL_HIDDEN: True
 
   HEAD:
     TYPE: Generative

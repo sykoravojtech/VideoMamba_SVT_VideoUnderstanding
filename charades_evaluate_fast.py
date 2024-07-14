@@ -49,35 +49,39 @@ class VideoCaptioningModel_(VideoCaptioningModel):
         return self.head.beam_search(enc_hidden, max_len, beam_size)
 
 
-WEIGHTS = sorted(glob('runs/cap_vm_charades_vm_f8_exp0_16_train/epoch=*.ckpt'))
+class CaptioningDataset(Dataset):
+    def __init__(self, train: bool, mean: torch.tensor, std: torch.tensor, frame_skip: int = 8):
+        super().__init__()
+        self.mean = torch.tensor(mean)
+        self.std = torch.tensor(std)
+        self.frame_skip = frame_skip
+        if train:
+            self.x = sorted(glob("data/encodings/inp_64_int/train_x_*.pt"))
+            self.y = sorted(glob("data/encodings/inp_64_int/train_y_*.pt"))
+        else:
+            self.x = sorted(glob("data/encodings/inp_64_int/val_x_*.pt"))
+            self.y = sorted(glob("data/encodings/inp_64_int/val_y_*.pt"))
+        
+    def __len__(self):
+        return len(self.x)
+
+    def __getitem__(self, ind):
+        return ((torch.load(self.x[ind])[::self.frame_skip].permute(0,2,3,1)/255 - self.mean)/self.std).permute(0,3,1,2), torch.load(self.y[ind])
+
+
+WEIGHTS = glob('runs/cap_vm_charades_s228_f8_exp0_16_train_all/epoch=*.ckpt')
+WEIGHTS.sort(key=lambda f: int("".join(filter(str.isdigit, f.split("/")[-1]))))
 # WEIGHT = "runs/cap_svt_charades_s224_f8_exp_8_train/last-v2.ckpt"
-for WEIGHT in WEIGHTS:
+for WEIGHT in WEIGHTS[:]:
     print(WEIGHT)
 
-
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    lit_module = VideoCaptioningModel_.load_from_checkpoint(WEIGHT, map_location=device)
-    lit_module = lit_module.to("cuda").eval()
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    lit_module = VideoCaptioningModel_(config)
+    # lit_module.encoder.vit.time_embed = torch.nn.Parameter(torch.concat([lit_module.encoder.vit.time_embed.data]*4, axis=1))
+    lit_module.to(device)
+    lit_module.load_state_dict(torch.load(WEIGHT, map_location=device)["state_dict"])
+    lit_module = lit_module.eval()
     tokenizer = lit_module.head.tokenizer
-
-    class CaptioningDataset(Dataset):
-        def __init__(self, train: bool, mean: torch.tensor, std: torch.tensor, frame_skip: int = 8):
-            super().__init__()
-            self.mean = torch.tensor(mean)
-            self.std = torch.tensor(std)
-            self.frame_skip = frame_skip
-            if train:
-                self.x = sorted(glob("data/encodings/inp_64_int/train_x_*.pt"))
-                self.y = sorted(glob("data/encodings/inp_64_int/train_y_*.pt"))
-            else:
-                self.x = sorted(glob("data/encodings/inp_64_int/val_x_*.pt"))
-                self.y = sorted(glob("data/encodings/inp_64_int/val_y_*.pt"))
-            
-        def __len__(self):
-            return len(self.x)
-
-        def __getitem__(self, ind):
-            return ((torch.load(self.x[ind])[::self.frame_skip].permute(0,2,3,1)/255 - self.mean)/self.std).permute(0,3,1,2), torch.load(self.y[ind])
 
     val_dataset = CaptioningDataset(False, config.DATA.MEAN, config.DATA.STD, config.DATA.FRAME_SKIP)
 
