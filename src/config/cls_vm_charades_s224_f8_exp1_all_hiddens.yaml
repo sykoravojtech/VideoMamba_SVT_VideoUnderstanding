@@ -17,7 +17,7 @@ MODEL:
 
   HEAD:
     TYPE: MLP
-    REDUCER_TYPE: weighted_hidden_wise # Options: average, weighted_token_wise, weighted_hidden_wise. If RETURN_ALL_HIDDEN is False, this is ignored.
+    REDUCER_TYPE: weighted_token_wise # Options: average, weighted_token_wise, weighted_hidden_wise. If RETURN_ALL_HIDDEN is False, this is ignored.
     LAYERS: [512, 512]
     DROPOUT: 0.5  # Optional: Dropout probability
     LAYER_NORM: False  # Optional: Use layer normalization
