@@ -5,13 +5,14 @@ import torch
 import numpy as np
 from PIL import Image
 import tempfile
-
+from typing import Dict
 from pytorchvideo.data.encoded_video import EncodedVideo
-
+from torch import nn
 from fvcore.common.config import CfgNode
 
 from src.models import create_model
 from src.datasets.transformations import get_val_transforms
+from src.models.captioning_model import VideoCaptioningModel
 
 DATA_DIR = "data/raw/Charades"
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -19,6 +20,9 @@ VM_SETTINGS = {'config_path': 'src/config/cls_vm_charades_s224_f8_exp0.yaml',
                'weight_path': 'runs/cls_vm_ch_exp7/epoch=142-val_mAP=0.227.ckpt'}
 SVT_SETTINGS = {'config_path': 'src/config/cls_svt_charades_s224_f8_exp0.yaml',
                'weight_path': '/teamspace/studios/this_studio/PracticalML_2024/runs/cls_svt_charades_s224_f8_exp0/epoch=18-val_mAP=0.165.ckpt'}
+
+CAP_VM_SETTINGS = {'config_path': 'src/config/cap_svt_charades_s224_f8_exp0.yaml'}
+CAP_SVT_SETTINGS = {'config_path': 'src/config/cap_svt_charades_s224_f8_exp0.yaml'}
 
 @st.cache_resource()
 def load_action_map():
@@ -90,9 +94,33 @@ class ClsModel:
             model_output = model_output.max(axis=0)
         return model_output
 
+class VideoCaptioningModel_(VideoCaptioningModel):
+    def __init__(self, config_path):
+        self.config = CfgNode.load_yaml_with_base(config_path)
+        self.config = CfgNode(self.config)
+        super().__init__(self.config)
+
+    def get_input(self, video_path):
+        video = EncodedVideo.from_path(video_path, decode_audio=False)
+        clip_data = video.get_clip(start_sec=0, end_sec=1.037)
+        clip_tensor = clip_data['video']  # (C, T, H, W)
+        return clip_tensor.permute(1, 0, 2, 3).unsqueeze(0).to(DEVICE)
+
+    def generate(self, X: torch.Tensor, max_len: int = 64, beam_size: int = 1) -> str:
+        enc_hidden = self.encoder(X)
+        return self.head.beam_search(enc_hidden, max_len, beam_size)
+
 
 cls_vm = ClsModel(VM_SETTINGS['config_path'], VM_SETTINGS['weight_path'])
+#CAP_WEIGHTS_VM = sorted(glob('runs/cap_vm_charades_vm_f8_exp0_16_train/epoch=*.ckpt'))
+#cap_model_vm = VideoCaptioningModel_.load_from_checkpoint(CAP_WEIGHTS, map_location=device).to(DEVICE).eval()
+cap_model_vm = VideoCaptioningModel_(config_path=CAP_VM_SETTINGS['config_path']).to(DEVICE).eval()
+
 cls_svt = ClsModel(SVT_SETTINGS['config_path'], SVT_SETTINGS['weight_path'])
+#CAP_WEIGHTS_svt = sorted(glob('runs/cap_vm_charades_vm_f8_exp0_16_train/epoch=*.ckpt'))
+#cap_model_svt = VideoCaptioningModel_.load_from_checkpoint(CAP_WEIGHTS, map_location=device).to(DEVICE).eval()
+cap_model_svt = VideoCaptioningModel_(config_path=CAP_SVT_SETTINGS['config_path']).to(DEVICE).eval()
+
 print(cls_vm)
 
 action_label2text = load_action_map()  
@@ -101,11 +129,11 @@ def save_uploaded_file(uploaded_file, name='temp_video.mp4'):
     with open(name, 'wb') as f:
         f.write(uploaded_file.getbuffer())
 
-def get_model(model_name):
+def get_models(model_name):
     if model_name == 'Self-supervised Video Transformer':
-        return cls_svt
+        return cls_svt, cap_model_svt
     elif model_name == 'Video Mamba':
-        return cls_vm
+        return cls_vm, cap_model_vm
     raise ValueError(f"Model {model_name} not found")
 
 
@@ -126,14 +154,18 @@ def main():
         save_uploaded_file(uploaded_file, temp_file)
         
         if st.button('Predict'):
-            cls_model = get_model(cls_model_name)
+            cls_model, cap_model = get_models(cls_model_name)
             model_output = cls_model.predict(temp_file)
             topk_class_indices = np.argsort(model_output)[-5:][::-1]
             text = ""
             for ind in topk_class_indices:
                 text += f"Predicted action: {action_label2text[ind]}. Probability: {model_output[ind]:.2f}\n"
 
+            inp_tensor = cap_model.get_input(temp_file)
+            caption = cap_model.generate(inp_tensor, max_len=128, beam_size=3)
+
             st.text_area(label='Action classification:', value=text, height=200)
+            st.text_area(label='Generated Video Caption:', value=caption, height=200)
 
 if __name__ == "__main__":
     main()
