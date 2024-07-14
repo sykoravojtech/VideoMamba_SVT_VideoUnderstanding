@@ -37,7 +37,7 @@ def classification_collate_fn(config):
                 for i, example in enumerate(examples):
                     labels[i, example['video_label']] = 1
             else:  # single label
-                labels = torch.tensor([example['video_label'] for example in examples])
+                labels = torch.tensor([example['video_label'] for example in examples]).view(-1)
         else:  # if ucf
             labels = torch.tensor([example["label"] for example in examples])
 
