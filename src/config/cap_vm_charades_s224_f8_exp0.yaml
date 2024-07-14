@@ -1,5 +1,5 @@
 PROJECT_NAME: PracticalML
-EXPERIMENT: cap_svt_charades_s224_f8_exp_32_train
+EXPERIMENT: cap_vm_charades_vm_f8_exp0_16_train
 OUTPUT_DIR: ./runs
 WANDB_KEY: 547d969d74fa2db0a0eb6a8b49490f5fddccfc04
 SEED: 42
@@ -7,9 +7,10 @@ SEED: 42
 MODEL:
   TYPE: captioning
   ENCODER:
-    TYPE: VideoTransformer
-    PRETRAINED: checkpoints/kinetics400_vitb_ssl.pth
-    HIDDEN_SIZE: 768
+    TYPE: VideoMamba
+    PRETRAINED: True
+    MODEL_SIZE: middle # tiny, small, middle
+    HIDDEN_SIZE: 576   # 192,  384,   576
     RETURN_ALL_HIDDEN: False
 
   HEAD:
@@ -22,20 +23,20 @@ MODEL:
 DATA:
   DATASET: charades_caption
   ROOT_PATH: data/raw/Charades
-  TRAIN_CSV: Charades_per-frame_annotations_fps1.5_captioning_train.csv
-  TEST_CSV: Charades_per-frame_annotations_fps1.5_captioning_test.csv
+  TRAIN_CSV: Charades_per-frame_annotations_fps6.0_captioning_train.csv
+  TEST_CSV: Charades_per-frame_annotations_fps6.0_captioning_test.csv
   IMG_SIZE: 224
-  NUM_SAMPLED_FRAMES: 8
+  NUM_SAMPLED_FRAMES: 16
   NUM_SAMPLED_FRAMES_MULT: 4
   CLIP_DURATION: 30
   MEAN: [0.45, 0.45, 0.45]
   STD: [0.225, 0.225, 0.225]
   NUM_WORKERS: 16
-  FRAME_SKIP: 2
+  FRAME_SKIP: 4
 
 TRAIN:
   FREEZE_ENCODER: True
-  NUM_EPOCHS: 20
+  NUM_EPOCHS: 15
   BATCH_SIZE: 4
   OPTIM:
     TYPE: AdamW
@@ -43,7 +44,7 @@ TRAIN:
     MIN_LEARNING_RATE: 0.000001
     EPS: 0.000001
     BETAS: [0.9, 0.999]
-    LR_MILESTONES: [18]
+    LR_MILESTONES: [45]
   LOG_STEPS: 50
   ACCELERATOR: auto
   DEVICES: auto

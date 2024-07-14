@@ -162,9 +162,8 @@ cython_debug/
 .vscode/
 checkpoints/*
 !checkpoints/README.md
-data/raw/*
-data/processed/*
-data/encodings/*
+data/*
+!data/README.md
 runs/*
 pytorchvideo
 wandb

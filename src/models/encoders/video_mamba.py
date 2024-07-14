@@ -31,6 +31,7 @@ class VideoMambaEncoder(EncoderAbstract):
             "img_size": config.DATA.IMG_SIZE,
             "norm_epsilon": config.TRAIN.OPTIM.EPS,
             "device": "cuda" if config.TRAIN.ACCELERATOR == "auto" else config.TRAIN.ACCELERATOR,
+            "return_hidden": config.MODEL.ENCODER.RETURN_ALL_HIDDEN
             # "embed_dim": config.MODEL.ENCODER.HIDDEN_SIZE, # already implemented in the model
         }
         if config.MODEL.ENCODER.MODEL_SIZE == "tiny":

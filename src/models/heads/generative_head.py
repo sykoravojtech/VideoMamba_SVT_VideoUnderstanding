@@ -15,6 +15,7 @@ class GenerativeHead(HeadAbstract):
         model_name = self.config.MODEL.HEAD.LANGUAGE_MODEL
         lm_config = AutoConfig.from_pretrained(model_name, add_cross_attention=True)
         self.language_model = AutoModelForCausalLM.from_pretrained(model_name, config=lm_config)
+        # self.language_model = AutoModelForCausalLM.from_config(lm_config)
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.tokenizer.pad_token = self.tokenizer.eos_token
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -40,8 +41,6 @@ class GenerativeHead(HeadAbstract):
         # probability of this sequence, since it's not being predicted by the model.
         input_ids = [torch.tensor([self.tokenizer.bos_token_id], device=self.device)]
         beam_logprobs: Optional[List[float]] = None
-
-        print(input_ids)
 
         def _get_beam_outputs(_input_ids: torch.Tensor) -> Tuple[List[torch.Tensor], torch.Tensor]:
             """Performs inference on the 'input_ids' Tensor, and collects the top
