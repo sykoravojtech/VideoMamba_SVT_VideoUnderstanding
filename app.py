@@ -16,9 +16,9 @@ from src.datasets.transformations import get_val_transforms
 DATA_DIR = "data/raw/Charades"
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 VM_SETTINGS = {'config_path': 'src/config/cls_vm_charades_s224_f8_exp0.yaml',
-               'weight_path': 'runs/cls_vm_ch_exp5/epoch=43-val_mAP=0.222.ckpt'}
+               'weight_path': 'runs/cls_vm_ch_exp7/epoch=142-val_mAP=0.227.ckpt'}
 SVT_SETTINGS = {'config_path': 'src/config/cls_svt_charades_s224_f8_exp0.yaml',
-               'weight_path': 'runs/cls_svt_charades_s224_f8_exp0/epoch=6-val_mAP=0.163.ckpt'}
+               'weight_path': '/teamspace/studios/this_studio/PracticalML_2024/runs/cls_svt_charades_s224_f8_exp0/epoch=18-val_mAP=0.165.ckpt'}
 
 @st.cache_resource()
 def load_action_map():

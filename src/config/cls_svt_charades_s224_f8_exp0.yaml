@@ -11,9 +11,11 @@ MODEL:
     PRETRAINED: checkpoints/kinetics400_vitb_ssl.pth
     HIDDEN_SIZE: 768
     RETURN_ALL_HIDDEN: False
+    NUM_VISUAL_TOKENS: 1
 
   HEAD:
     TYPE: MLP
+    REDUCER_TYPE: token_wise # Options: token_wise, hidden_wise. If RETURN_ALL_HIDDEN is False, this is ignored.
     LAYERS: [1024, 1024]
     DROPOUT: 0.7  # Optional: Dropout probability
     LAYER_NORM: False  # Optional: Use layer normalization

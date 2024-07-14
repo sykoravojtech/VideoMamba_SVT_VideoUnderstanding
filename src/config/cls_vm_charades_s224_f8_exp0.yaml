@@ -12,7 +12,7 @@ MODEL:
     MODEL_SIZE: middle # tiny, small, middle
     HIDDEN_SIZE: 576   # 192,  384,   576
     RETURN_ALL_HIDDEN: False
-    NUM_VISUAL_TOKENS: 3137 # Number of visual tokens' hidden states to use in the head. 
+    NUM_VISUAL_TOKENS: 1 # Number of visual tokens' hidden states to use in the head. 
                             # If RETURN_ALL_HIDDEN is False, this is ignored.
 
   HEAD:
