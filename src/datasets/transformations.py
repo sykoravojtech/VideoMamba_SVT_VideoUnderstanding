@@ -91,6 +91,7 @@ def get_val_transforms(config: CfgNode):
                             UniformTemporalSubsample(config.DATA.NUM_SAMPLED_FRAMES),
                             Lambda(lambda x: x / 255.0),
                             Normalize(mean, std),
+                            Resize(resize_to),
                         ]
                     ),
                 ),
