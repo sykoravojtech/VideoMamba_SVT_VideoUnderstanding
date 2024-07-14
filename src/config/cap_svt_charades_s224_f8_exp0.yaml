@@ -10,12 +10,13 @@ MODEL:
     TYPE: VideoTransformer
     PRETRAINED: checkpoints/kinetics400_vitb_ssl.pth
     HIDDEN_SIZE: 768
-    RETURN_ALL_HIDDEN: False
+    RETURN_ALL_HIDDEN: True
 
   HEAD:
     TYPE: Generative
     LANGUAGE_MODEL: gpt2
     MAX_TOKENS: 128
+    NUM_CLASSES: -1
 
   LOSS: CrossEntropyLoss
 

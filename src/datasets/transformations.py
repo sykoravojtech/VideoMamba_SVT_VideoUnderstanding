@@ -89,6 +89,7 @@ def get_val_transforms(config: CfgNode):
                     transform=Compose(
                         [
                             UniformTemporalSubsample(config.DATA.NUM_SAMPLED_FRAMES),
+                            Resize(resize_to),
                             Lambda(lambda x: x / 255.0),
                             Normalize(mean, std),
                         ]

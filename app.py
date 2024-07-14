@@ -15,10 +15,14 @@ from src.datasets.transformations import get_val_transforms
 
 DATA_DIR = "data/raw/Charades"
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-VM_SETTINGS = {'config_path': 'src/config/cls_vm_charades_s224_f8_exp0.yaml',
+CLS_VM_SETTINGS = {'config_path': 'src/config/cls_vm_charades_s224_f8_exp0.yaml',
                'weight_path': 'runs/cls_vm_ch_exp7/epoch=142-val_mAP=0.227.ckpt'}
-SVT_SETTINGS = {'config_path': 'src/config/cls_svt_charades_s224_f8_exp0.yaml',
+CLS_SVT_SETTINGS = {'config_path': 'src/config/cls_svt_charades_s224_f8_exp0.yaml',
                'weight_path': '/teamspace/studios/this_studio/PracticalML_2024/runs/cls_svt_charades_s224_f8_exp0/epoch=18-val_mAP=0.165.ckpt'}
+CAP_VM_SETTINGS = {'config_path': 'src/config/cap_vm_charades_s224_f8_exp0.yaml',
+               'weight_path': 'runs/cls_vm_ch_exp7/epoch=142-val_mAP=0.227.ckpt'}
+CAP_SVT_SETTINGS = {'config_path': 'src/config/cap_svt_charades_s224_f8_exp0.yaml',
+               'weight_path': '/teamspace/studios/this_studio/PracticalML_2024/runs/cap_svt_charades_s224_f8_exp_32_train_all/epoch=11-step=23952.ckpt'}
 
 @st.cache_resource()
 def load_action_map():
@@ -79,7 +83,6 @@ class ClsModel:
         # Prepare video tensor for inference
         inp_video_tensors = torch.stack(all_clip_tensors, dim=0)  # (B, C, T, H, W)
         inp_video_tensors = inp_video_tensors.permute(0, 2, 1, 3, 4)  # (B, C, T, H, W) -> (B, T, C, H, W)
-
         return inp_video_tensors
 
     def predict(self, video_path):
@@ -91,9 +94,27 @@ class ClsModel:
         return model_output
 
 
-cls_vm = ClsModel(VM_SETTINGS['config_path'], VM_SETTINGS['weight_path'])
-cls_svt = ClsModel(SVT_SETTINGS['config_path'], SVT_SETTINGS['weight_path'])
-print(cls_vm)
+class CapModel(ClsModel):
+    def __init__(self, config_path, weight_path):
+        super().__init__(config_path, weight_path)
+
+    @staticmethod
+    def _load_model(config, weight_path):
+        lit_module = create_model(config)
+        state_dict = torch.load(weight_path, map_location='cpu')['state_dict']
+        if config.MODEL.ENCODER.TYPE == "VideoTransformer":
+            lit_module.encoder.vit.time_embed = torch.nn.Parameter(torch.zeros(1, 32, 768))
+        load_info = lit_module.load_state_dict(state_dict)
+        lit_module.eval().to(DEVICE)
+        return lit_module
+
+
+    def predict(self, video_path):
+        inp_video_tensors = self.get_input(video_path)
+        with torch.no_grad():
+            inp_video_tensors = inp_video_tensors.to(DEVICE)
+            model_output = self.lit_module.generate(inp_video_tensors, 128, 3)
+        return model_output
 
 action_label2text = load_action_map()  
 
@@ -103,9 +124,9 @@ def save_uploaded_file(uploaded_file, name='temp_video.mp4'):
 
 def get_model(model_name):
     if model_name == 'Self-supervised Video Transformer':
-        return cls_svt
+        return ClsModel(CLS_SVT_SETTINGS['config_path'], CLS_SVT_SETTINGS['weight_path']), CapModel(CAP_SVT_SETTINGS['config_path'], CAP_SVT_SETTINGS['weight_path'])
     elif model_name == 'Video Mamba':
-        return cls_vm
+        return ClsModel(CLS_VM_SETTINGS['config_path'], CLS_VM_SETTINGS['weight_path']), CapModel(CAP_SVT_SETTINGS['config_path'], CAP_SVT_SETTINGS['weight_path'])
     raise ValueError(f"Model {model_name} not found")
 
 
@@ -114,7 +135,7 @@ def main():
 
     # Combo box for model selection
     cls_model_name = st.selectbox("Choose a model", ['Self-supervised Video Transformer', 'Video Mamba'])
-    
+    cls_model, cap_model = get_model(cls_model_name)
     uploaded_file = st.file_uploader("Upload video", type=["mp4", "mov", "avi", "mkv"])
 
     st.video(uploaded_file)
@@ -125,15 +146,18 @@ def main():
         temp_file = '/tmp/temp_video.mp4'
         save_uploaded_file(uploaded_file, temp_file)
         
-        if st.button('Predict'):
-            cls_model = get_model(cls_model_name)
+        if st.button('Predict action class'):
             model_output = cls_model.predict(temp_file)
             topk_class_indices = np.argsort(model_output)[-5:][::-1]
-            text = ""
+            text = "Top 5 classes:\n"
             for ind in topk_class_indices:
                 text += f"Predicted action: {action_label2text[ind]}. Probability: {model_output[ind]:.2f}\n"
 
             st.text_area(label='Action classification:', value=text, height=200)
+        
+        if st.button("Predict caption"):
+            model_output = cap_model.predict(temp_file)
+            st.text("Caption: " + model_output)
 
 if __name__ == "__main__":
     main()

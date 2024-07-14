@@ -11,7 +11,7 @@ MODEL:
     PRETRAINED: True
     MODEL_SIZE: middle # tiny, small, middle
     HIDDEN_SIZE: 576   # 192,  384,   576
-    RETURN_ALL_HIDDEN: False
+    RETURN_ALL_HIDDEN: True
 
   HEAD:
     TYPE: Generative

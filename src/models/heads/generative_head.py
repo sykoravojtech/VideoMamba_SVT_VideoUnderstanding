@@ -21,7 +21,7 @@ class GenerativeHead(HeadAbstract):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def forward(self, enc_hidden: torch.Tensor, y: Dict[str, torch.Tensor]) -> torch.Tensor:
-        enc_hidden = enc_hidden.unsqueeze(1) # make shape (bs x 1 x hidden_size)
+        # enc_hidden = enc_hidden.unsqueeze(1) # make shape (bs x 1 x hidden_size)
         output = self.language_model(input_ids=y['input_ids'],
                                    encoder_hidden_states=enc_hidden,
                                    attention_mask=y['attention_mask'])
@@ -35,7 +35,7 @@ class GenerativeHead(HeadAbstract):
         end-to-end confidence score. Repeat this process until at most 'max_len' tokens
         have been generated.
         """
-        encoder_hidden_states = encoder_hidden_states.reshape(1, 1, -1).to(self.device)
+        # encoder_hidden_states = encoder_hidden_states.reshape(1, 1, -1).to(self.device)
         # Since we haven't performed any beam search steps yet, we just have one
         # set of input IDs (with a single "start" token). We use 'None' for the log
         # probability of this sequence, since it's not being predicted by the model.
