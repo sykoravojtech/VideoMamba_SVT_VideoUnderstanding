@@ -31,10 +31,10 @@ def get_train_transforms(config: CfgNode):
                     transform=Compose(
                         [
                             UniformTemporalSubsample(config.DATA.NUM_SAMPLED_FRAMES_MULT*config.DATA.NUM_SAMPLED_FRAMES),
-                            Resize(resize_to),
                             RandomHorizontalFlip(p=0.5),
                             Lambda(lambda x: x / 255.0),
                             Normalize(mean, std),
+                            Resize(resize_to),
                         ]
                     ),
                 ),
@@ -73,9 +73,9 @@ def get_val_transforms(config: CfgNode):
                         [
                             UniformTemporalSubsample(
                                 config.DATA.NUM_SAMPLED_FRAMES_MULT * config.DATA.NUM_SAMPLED_FRAMES),
-                            Resize(resize_to),
                             Lambda(lambda x: x / 255.0),
                             Normalize(mean, std),
+                            Resize(resize_to),
                         ]
                     ),
                 ),
@@ -89,7 +89,6 @@ def get_val_transforms(config: CfgNode):
                     transform=Compose(
                         [
                             UniformTemporalSubsample(config.DATA.NUM_SAMPLED_FRAMES),
-                            Resize(resize_to),
                             Lambda(lambda x: x / 255.0),
                             Normalize(mean, std),
                             Resize(resize_to),
