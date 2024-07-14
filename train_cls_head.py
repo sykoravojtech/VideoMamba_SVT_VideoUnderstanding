@@ -53,7 +53,7 @@ def set_params(args, config):
     if args.use_class_weights:
         config.MODEL.USE_CLASS_WEIGHTS = True
         print("Using class weights")
-        config.EXPERIMENT += "_cw5"
+        config.EXPERIMENT += "_cw2"
     if args.lr_milestones:
         config.TRAIN.OPTIM.LR_MILESTONES = args.lr_milestones
         print(f"Setting LR milestones to {args.lr_milestones}")

@@ -31,12 +31,12 @@ args = parser.parse_args()
 config = CfgNode.load_yaml_with_base(args.config)
 config = CfgNode(config)
 
-DATA_DIR = "data/raw/Charades"
+DATA_DIR = config.DATA.ROOT_PATH
 VIDEO_DIRS = f"{DATA_DIR}/videos"
 CSV_PATH = f"{DATA_DIR}/Charades_v1_test.csv"
 # HEAD_WEIGHT = "runs/cls_svt_charades_s224_f8_exp0/epoch=14-val_mAP=0.158.ckpt"
 HEAD_WEIGHT = args.weight
-
+print(f"{VIDEO_DIRS=}")
 
 action_map = pd.read_csv(f"{DATA_DIR}/Charades_v1_classes_new_map.csv")
 action_id2text = action_map.set_index('action_id')['action'].to_dict()
@@ -59,7 +59,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 lit_module.to(device)
 
 # Load video
-VID_PATH = f"data/raw/Charades/videos/{sample['id']}.mp4"
+VID_PATH = f"{VIDEO_DIRS}/{sample['id']}.mp4"
 video = EncodedVideo.from_path(VID_PATH)
 
 actions = sample.actions.split(";")

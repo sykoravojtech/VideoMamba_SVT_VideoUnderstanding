@@ -31,7 +31,7 @@ args = parser.parse_args()
 config = CfgNode.load_yaml_with_base(args.config)
 config = CfgNode(config)
 
-DATA_DIR = "data/raw/Charades"
+DATA_DIR = config.DATA.ROOT_PATH
 VIDEO_DIRS = f"{DATA_DIR}/videos"
 CSV_PATH = f"{DATA_DIR}/Charades_v1_test.csv"
 ASSET_DIR = "assets"
