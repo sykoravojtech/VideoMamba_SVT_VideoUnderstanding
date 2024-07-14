@@ -5,9 +5,9 @@ import torch
 import numpy as np
 from PIL import Image
 import tempfile
-
+from typing import Dict
 from pytorchvideo.data.encoded_video import EncodedVideo
-
+from torch import nn
 from fvcore.common.config import CfgNode
 
 from src.models import create_model
@@ -19,8 +19,8 @@ CLS_VM_SETTINGS = {'config_path': 'src/config/cls_vm_charades_s224_f8_exp0.yaml'
                'weight_path': 'runs/cls_vm_ch_exp7/epoch=142-val_mAP=0.227.ckpt'}
 CLS_SVT_SETTINGS = {'config_path': 'src/config/cls_svt_charades_s224_f8_exp0.yaml',
                'weight_path': '/teamspace/studios/this_studio/PracticalML_2024/runs/cls_svt_charades_s224_f8_exp0/epoch=18-val_mAP=0.165.ckpt'}
-CAP_VM_SETTINGS = {'config_path': 'src/config/cap_vm_charades_s224_f8_exp0.yaml',
-               'weight_path': 'runs/cls_vm_ch_exp7/epoch=142-val_mAP=0.227.ckpt'}
+# CAP_VM_SETTINGS = {'config_path': 'src/config/cap_vm_charades_s224_f8_exp0.yaml',
+#                'weight_path': 'runs/cls_vm_ch_exp7/epoch=142-val_mAP=0.227.ckpt'}
 CAP_SVT_SETTINGS = {'config_path': 'src/config/cap_svt_charades_s224_f8_exp0.yaml',
                'weight_path': '/teamspace/studios/this_studio/PracticalML_2024/runs/cap_svt_charades_s224_f8_exp_32_train_all/epoch=11-step=23952.ckpt'}
 
@@ -122,11 +122,17 @@ def save_uploaded_file(uploaded_file, name='temp_video.mp4'):
     with open(name, 'wb') as f:
         f.write(uploaded_file.getbuffer())
 
-def get_model(model_name):
+def get_model(model_name, cls):
     if model_name == 'Self-supervised Video Transformer':
-        return ClsModel(CLS_SVT_SETTINGS['config_path'], CLS_SVT_SETTINGS['weight_path']), CapModel(CAP_SVT_SETTINGS['config_path'], CAP_SVT_SETTINGS['weight_path'])
+        if cls:
+            return ClsModel(CLS_SVT_SETTINGS['config_path'], CLS_SVT_SETTINGS['weight_path'])
+        else:
+            return CapModel(CAP_SVT_SETTINGS['config_path'], CAP_SVT_SETTINGS['weight_path'])
     elif model_name == 'Video Mamba':
-        return ClsModel(CLS_VM_SETTINGS['config_path'], CLS_VM_SETTINGS['weight_path']), CapModel(CAP_SVT_SETTINGS['config_path'], CAP_SVT_SETTINGS['weight_path'])
+        if cls:
+            return ClsModel(CLS_VM_SETTINGS['config_path'], CLS_VM_SETTINGS['weight_path'])
+        else:
+            return CapModel(CAP_SVT_SETTINGS['config_path'], CAP_SVT_SETTINGS['weight_path'])
     raise ValueError(f"Model {model_name} not found")
 
 
@@ -135,7 +141,6 @@ def main():
 
     # Combo box for model selection
     cls_model_name = st.selectbox("Choose a model", ['Self-supervised Video Transformer', 'Video Mamba'])
-    cls_model, cap_model = get_model(cls_model_name)
     uploaded_file = st.file_uploader("Upload video", type=["mp4", "mov", "avi", "mkv"])
 
     st.video(uploaded_file)
@@ -147,6 +152,7 @@ def main():
         save_uploaded_file(uploaded_file, temp_file)
         
         if st.button('Predict action class'):
+            cls_model = get_model(cls_model_name, True)
             model_output = cls_model.predict(temp_file)
             topk_class_indices = np.argsort(model_output)[-5:][::-1]
             text = "Top 5 classes:\n"
@@ -156,6 +162,7 @@ def main():
             st.text_area(label='Action classification:', value=text, height=200)
         
         if st.button("Predict caption"):
+            cap_model = get_model(cls_model_name, False)
             model_output = cap_model.predict(temp_file)
             st.text("Caption: " + model_output)
 

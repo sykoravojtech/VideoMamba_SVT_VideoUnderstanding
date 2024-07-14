@@ -92,6 +92,7 @@ def get_val_transforms(config: CfgNode):
                             Resize(resize_to),
                             Lambda(lambda x: x / 255.0),
                             Normalize(mean, std),
+                            Resize(resize_to),
                         ]
                     ),
                 ),
