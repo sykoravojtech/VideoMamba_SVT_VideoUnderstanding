@@ -36,6 +36,7 @@ VIDEO_DIRS = f"{DATA_DIR}/videos"
 CSV_PATH = f"{DATA_DIR}/Charades_v1_test.csv"
 ASSET_DIR = "assets"
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+STRIDE = 3 # None means to use the stride = clip duration, i.e. no overlap. Else, set to an integer value.
 
 NUM_PROCESSES = min(multiprocessing.cpu_count(), config.DATA.NUM_WORKERS)  # Define the number of tasks you want to run in parallel
 print('Number of CPUs:', NUM_PROCESSES)
@@ -46,7 +47,7 @@ action_label2text = action_map.set_index('label')['action'].to_dict()
 action_id2label = action_map.set_index('action_id')['label'].to_dict()
 
 df = pd.read_csv(CSV_PATH)
-# df = df.sample(10, random_state=42)
+# df = df.sample(100, random_state=42)
 
 def load_model(config, weight_path):
     if config.DATA.ENCODING_DIR: # head-only weights
@@ -75,7 +76,9 @@ def get_clip_tensors(video):
     video_duration = float(video._duration)
     all_clip_tensors = []
 
-    for clip_start_sec in np.arange(0, video_duration, clip_duration):
+    stride = STRIDE if STRIDE is not None else clip_duration
+
+    for clip_start_sec in np.arange(0, video_duration, stride):
         clip_end_sec = min(clip_start_sec + clip_duration, video_duration)
         clip_data = video.get_clip(start_sec=clip_start_sec, end_sec=clip_end_sec)
         if clip_data['video'] is None:
