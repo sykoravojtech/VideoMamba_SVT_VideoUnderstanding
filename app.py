@@ -22,7 +22,7 @@ CLS_SVT_SETTINGS = {'config_path': 'src/config/cls_svt_charades_s224_f8_exp0.yam
 CAP_VM_SETTINGS = {'config_path': 'src/config/cap_vm_charades_s224_f8_exp0.yaml',
                'weight_path': '/teamspace/studios/this_studio/PracticalML_2024/runs/cap_vm_charades_s224_f8_exp0_16_train_all/epoch=14-step=29940.ckpt'}
 CAP_SVT_SETTINGS = {'config_path': 'src/config/cap_svt_charades_s224_f8_exp0.yaml',
-               'weight_path': '/teamspace/studios/this_studio/PracticalML_2024/runs/cap_svt_charades_s224_f8_exp_32_train_all/epoch=11-step=23952.ckpt'}
+               'weight_path': '/teamspace/studios/practicalml-captioning/PracticalML_2024/runs/cap_svt_charades_s224_f8_exp_32_train_all/epoch=11-step=23952.ckpt'}
 
 @st.cache_resource()
 def load_action_map():
@@ -43,6 +43,7 @@ class ClsModel:
         self.lit_module = self._load_model(self.config, self.weight_path)
 
     @staticmethod
+    @st.cache_resource()
     def _load_model(config, weight_path):
         print('Load model')
         if config.DATA.ENCODING_DIR: # head-only weights
@@ -99,6 +100,7 @@ class CapModel(ClsModel):
         super().__init__(config_path, weight_path)
 
     @staticmethod
+    @st.cache_resource()
     def _load_model(config, weight_path):
         lit_module = create_model(config)
         state_dict = torch.load(weight_path, map_location='cpu')['state_dict']
@@ -122,17 +124,23 @@ def save_uploaded_file(uploaded_file, name='temp_video.mp4'):
     with open(name, 'wb') as f:
         f.write(uploaded_file.getbuffer())
 
+# preload the model
+vm_cls_module = ClsModel(CLS_VM_SETTINGS['config_path'], CLS_VM_SETTINGS['weight_path'])
+svt_cls_module = ClsModel(CLS_SVT_SETTINGS['config_path'], CLS_SVT_SETTINGS['weight_path'])
+svt_cap_module = CapModel(CAP_SVT_SETTINGS['config_path'], CAP_SVT_SETTINGS['weight_path'])
+
+
 def get_model(model_name, cls):
     if model_name == 'Self-supervised Video Transformer':
         if cls:
-            return ClsModel(CLS_SVT_SETTINGS['config_path'], CLS_SVT_SETTINGS['weight_path'])
+            return svt_cls_module
         else:
-            return CapModel(CAP_SVT_SETTINGS['config_path'], CAP_SVT_SETTINGS['weight_path'])
+            return svt_cap_module
     elif model_name == 'Video Mamba':
         if cls:
-            return ClsModel(CLS_VM_SETTINGS['config_path'], CLS_VM_SETTINGS['weight_path'])
+            return vm_cls_module
         else:
-            return CapModel(CAP_SVT_SETTINGS['config_path'], CAP_SVT_SETTINGS['weight_path'])
+            return NotImplementedError('Mamba cap has not been implemented yet')
     raise ValueError(f"Model {model_name} not found")
 
 
