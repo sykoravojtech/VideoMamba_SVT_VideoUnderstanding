@@ -11,6 +11,7 @@ from torch import nn
 from fvcore.common.config import CfgNode
 
 from src.models import create_model
+from src.models.captioning_model_linear_proj import VideoCaptioningModelLinear
 from src.datasets.transformations import get_val_transforms
 
 DATA_DIR = "data/raw/Charades"
@@ -20,9 +21,11 @@ CLS_VM_SETTINGS = {'config_path': 'src/config/cls_vm_charades_s224_f8_exp0.yaml'
 CLS_SVT_SETTINGS = {'config_path': 'src/config/cls_svt_charades_s224_f8_exp0.yaml',
                'weight_path': '/teamspace/studios/this_studio/PracticalML_2024/runs/cls_svt_charades_s224_f8_exp0/epoch=18-val_mAP=0.165.ckpt'}
 CAP_VM_SETTINGS = {'config_path': 'src/config/cap_vm_charades_s224_f8_exp0.yaml',
-               'weight_path': '/teamspace/studios/this_studio/PracticalML_2024/runs/cap_vm_charades_s224_f8_exp0_16_train_all/epoch=14-step=29940.ckpt'}
+               'weight_path': '/teamspace/studios/practicalml-captioning/PracticalML_2024/runs/cap_vm_charades_s224_f8_exp0_16_train_all/epoch=14-step=29940.ckpt'}
 CAP_SVT_SETTINGS = {'config_path': 'src/config/cap_svt_charades_s224_f8_exp0.yaml',
                'weight_path': '/teamspace/studios/practicalml-captioning/PracticalML_2024/runs/cap_svt_charades_s224_f8_exp_32_train_all/epoch=11-step=23952.ckpt'}
+CAP_LM_SETTINGS = {'config_path': 'src/config/cap_lm_charades_s224_f8_exp0.yaml',
+               'weight_path': '/teamspace/studios/practicalml-captioning-jnjh/PracticalML_2024/runs/cap_lm_charades_s224_f8_exp_0/epoch=9-step=19970.ckpt'}
 
 @st.cache_resource()
 def load_action_map():
@@ -106,7 +109,7 @@ class CapModel(ClsModel):
         state_dict = torch.load(weight_path, map_location='cpu')['state_dict']
         if config.MODEL.ENCODER.TYPE == "VideoTransformer":
             lit_module.encoder.vit.time_embed = torch.nn.Parameter(torch.zeros(1, 32, 768))
-        load_info = lit_module.load_state_dict(state_dict)
+        load_info = lit_module.load_state_dict(state_dict, strict = False)
         lit_module.eval().to(DEVICE)
         return lit_module
 
@@ -117,6 +120,24 @@ class CapModel(ClsModel):
             inp_video_tensors = inp_video_tensors.to(DEVICE)
             model_output = self.lit_module.generate(inp_video_tensors, 128, 3)
         return model_output
+
+class CapModelLinear(ClsModel):
+    def __init__(self, config_path, weight_path):
+        super().__init__(config_path, weight_path)
+
+    @staticmethod
+    @st.cache_resource()
+    def _load_model(config, weight_path):
+        return VideoCaptioningModelLinear.load_from_checkpoint(weight_path, map_location=DEVICE, strict=False).to(DEVICE).eval()
+
+    def predict(self, video_path):
+        inp_video_tensors = self.get_input(video_path)
+        with torch.no_grad():
+            inp_video_tensors = inp_video_tensors.to(DEVICE)
+            model_output = self.lit_module.generate(inp_video_tensors, 128, 3)
+        return model_output
+
+
 
 action_label2text = load_action_map()  
 
@@ -129,6 +150,7 @@ vm_cls_module = ClsModel(CLS_VM_SETTINGS['config_path'], CLS_VM_SETTINGS['weight
 svt_cls_module = ClsModel(CLS_SVT_SETTINGS['config_path'], CLS_SVT_SETTINGS['weight_path'])
 svt_cap_module = CapModel(CAP_SVT_SETTINGS['config_path'], CAP_SVT_SETTINGS['weight_path'])
 vm_cap_module = CapModel(CAP_VM_SETTINGS['config_path'], CAP_VM_SETTINGS['weight_path'])
+cap_linear_module = CapModelLinear(CAP_LM_SETTINGS['config_path'], CAP_LM_SETTINGS['weight_path'])
 
 def get_model(model_name, cls):
     if model_name == 'Self-supervised Video Transformer':
@@ -168,9 +190,12 @@ def main():
                 text += f"Predicted action: {action_label2text[ind]}. Probability: {model_output[ind]:.2f}\n"
 
             st.text_area(label='Action classification:', value=text, height=200)
-        
+        lin_proj = st.checkbox("Use Linear Projection")
         if st.button("Predict caption"):
-            cap_model = get_model(cls_model_name, False)
+            if not lin_proj:
+                cap_model = get_model(cls_model_name, False)
+            else:
+                cap_model = cap_linear_module
             model_output = cap_model.predict(temp_file)
             st.text("Caption: " + model_output)
 
