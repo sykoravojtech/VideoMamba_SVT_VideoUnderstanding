@@ -93,6 +93,12 @@ class ClassificationDataset(Dataset):
 
     def __getitem__(self, ind):
         return torch.load(self.x[ind]), torch.load(self.y[ind])
+    
+def save_config(config, output_dir):
+    config_path = os.path.join(output_dir, 'config.yaml')
+    with open(config_path, 'w') as f:
+        f.write(config.dump())
+    print(f"Config saved to {config_path}")
 
 def train(args):
     """Train a new model"""
@@ -150,6 +156,10 @@ def train(args):
          mode='min' if 'loss' in checkpoint_monitor_criterion else 'max',
          save_last=True
     )
+
+    # Save the config file in the same directory as the checkpoints
+    os.makedirs(output_dir, exist_ok=True)
+    save_config(config, output_dir)
     
     # trainer
     trainer = Trainer(default_root_dir=output_dir, precision=config.TRAIN.PRECISION, max_epochs=config.TRAIN.NUM_EPOCHS,

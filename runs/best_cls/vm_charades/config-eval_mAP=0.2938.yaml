@@ -1,0 +1,68 @@
+
+PROJECT_NAME: PracticalML
+EXPERIMENT: cls_vm_ch_exp7_cw2
+OUTPUT_DIR: ./runs
+WANDB_KEY: 547d969d74fa2db0a0eb6a8b49490f5fddccfc04
+SEED: 42
+MODEL:
+  TYPE: classification
+  ENCODER:
+    TYPE: VideoMamba
+    PRETRAINED: true
+    MODEL_SIZE: middle
+    HIDDEN_SIZE: 576
+    RETURN_ALL_HIDDEN: false
+    NUM_VISUAL_TOKENS: 3137
+  HEAD:
+    TYPE: MLP
+    REDUCER_TYPE: token_wise
+    LAYERS:
+    - 1024
+    - 1024
+    DROPOUT: 0.7
+    LAYER_NORM: false
+    NUM_CLASSES: 157
+    MULTI_LABEL: true
+    THRESHOLD: 0.5
+  LOSS: BCEWithLogitsLoss
+  USE_CLASS_WEIGHTS: true
+DATA:
+  ENCODING_DIR: data/encodings/cls_vm_charades/
+  DATASET: charades_action_classification
+  ROOT_PATH: data/raw/Charades
+  TRAIN_CSV: Charades_per-frame_annotations_fps1.5_action_cls_train.csv
+  TEST_CSV: Charades_per-frame_annotations_fps1.5_action_cls_test.csv
+  IMG_SIZE: 224
+  NUM_SAMPLED_FRAMES: 16
+  CLIP_DURATION: 11
+  FPS: 1.5
+  MEAN:
+  - 0.485
+  - 0.456
+  - 0.406
+  STD:
+  - 0.229
+  - 0.224
+  - 0.225
+  NUM_WORKERS: 4
+TRAIN:
+  FREEZE_ENCODER: true
+  NUM_EPOCHS: 200
+  BATCH_SIZE: 32
+  OPTIM:
+    TYPE: AdamW
+    INIT_LEARNING_RATE: 0.0001
+    MIN_LEARNING_RATE: 1.0e-06
+    EPS: 1.0e-06
+    BETAS:
+    - 0.9
+    - 0.999
+    LR_MILESTONES:
+    - 200
+    - 400
+  LOG_STEPS: 50
+  ACCELERATOR: auto
+  DEVICES: auto
+  PRECISION: 32
+  BEST_CHECKPOINT_BY: val_mAP
+  COMPUTE_METRIC_AT_TRAIN_TIME: true

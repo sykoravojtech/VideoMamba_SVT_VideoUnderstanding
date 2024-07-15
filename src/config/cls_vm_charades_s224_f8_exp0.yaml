@@ -26,7 +26,7 @@ MODEL:
     THRESHOLD: 0.5
 
   LOSS: BCEWithLogitsLoss
-  USE_CLASS_WEIGHTS: False
+  USE_CLASS_WEIGHTS: True # 2
 
 DATA:
   ENCODING_DIR: data/encodings/cls_vm_charades/ # path to precomputed hidden states from the encoder
@@ -44,7 +44,7 @@ DATA:
 
 TRAIN:
   FREEZE_ENCODER: True
-  NUM_EPOCHS: 400
+  NUM_EPOCHS: 300
   BATCH_SIZE: 32
   OPTIM:
     TYPE: AdamW

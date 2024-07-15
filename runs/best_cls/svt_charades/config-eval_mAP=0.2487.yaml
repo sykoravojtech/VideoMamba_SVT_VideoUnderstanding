@@ -1,0 +1,66 @@
+DATA:
+  CLIP_DURATION: 6
+  DATASET: charades_action_classification
+  ENCODING_DIR: data/encodings/cls_svt_charades/
+  FPS: 1.5
+  IMG_SIZE: 224
+  MEAN:
+  - 0.45
+  - 0.45
+  - 0.45
+  NUM_SAMPLED_FRAMES: 8
+  NUM_WORKERS: 8
+  ROOT_PATH: data/raw/Charades
+  STD:
+  - 0.225
+  - 0.225
+  - 0.225
+  TEST_CSV: Charades_per-frame_annotations_fps1.5_action_cls_test.csv
+  TRAIN_CSV: Charades_per-frame_annotations_fps1.5_action_cls_train.csv
+EXPERIMENT: cls_svt_charades_s224_f8_exp8_LR1e-05_layers512,512_dropout0.7_cw2
+MODEL:
+  ENCODER:
+    HIDDEN_SIZE: 768
+    NUM_VISUAL_TOKENS: 1
+    PRETRAINED: checkpoints/kinetics400_vitb_ssl.pth
+    RETURN_ALL_HIDDEN: false
+    TYPE: VideoTransformer
+  HEAD:
+    DROPOUT: 0.7
+    LAYERS:
+    - 512
+    - 512
+    LAYER_NORM: false
+    MULTI_LABEL: true
+    NUM_CLASSES: 157
+    REDUCER_TYPE: token_wise
+    THRESHOLD: 0.5
+    TYPE: MLP
+  LOSS: BCEWithLogitsLoss
+  TYPE: classification
+  USE_CLASS_WEIGHTS: true
+OUTPUT_DIR: ./runs
+PROJECT_NAME: PracticalML
+SEED: 42
+TRAIN:
+  ACCELERATOR: auto
+  BATCH_SIZE: 8
+  BEST_CHECKPOINT_BY: val_mAP
+  COMPUTE_METRIC_AT_TRAIN_TIME: true
+  DEVICES: auto
+  FREEZE_ENCODER: true
+  LOG_STEPS: 50
+  NUM_EPOCHS: 300
+  OPTIM:
+    BETAS:
+    - 0.9
+    - 0.999
+    EPS: 1.0e-06
+    INIT_LEARNING_RATE: 1.0e-05
+    LR_MILESTONES:
+    - 250
+    - 400
+    MIN_LEARNING_RATE: 1.0e-06
+    TYPE: AdamW
+  PRECISION: 32
+WANDB_KEY: 547d969d74fa2db0a0eb6a8b49490f5fddccfc04
