@@ -21,9 +21,9 @@ CLS_VM_SETTINGS = {'config_path': 'src/config/cls_vm_charades_s224_f8_exp0.yaml'
 CLS_SVT_SETTINGS = {'config_path': 'src/config/cls_svt_charades_s224_f8_exp0.yaml',
                'weight_path': '/teamspace/studios/this_studio/PracticalML_2024/runs/cls_svt_charades_s224_f8_exp0/epoch=18-val_mAP=0.165.ckpt'}
 CAP_VM_SETTINGS = {'config_path': 'src/config/cap_vm_charades_s224_f8_exp0.yaml',
-               'weight_path': '/teamspace/studios/practicalml-captioning/PracticalML_2024/runs/cap_vm_charades_s224_f8_exp0_16_train_all/epoch=14-step=29940.ckpt'}
+               'weight_path': '/teamspace/studios/this_studio/PracticalML_2024/runs/cap_vm_charades_s224_f8_exp0_16_train_all/epoch=14-step=29940.ckpt'}
 CAP_SVT_SETTINGS = {'config_path': 'src/config/cap_svt_charades_s224_f8_exp0.yaml',
-               'weight_path': '/teamspace/studios/practicalml-captioning/PracticalML_2024/runs/cap_svt_charades_s224_f8_exp_32_train_all/epoch=11-step=23952.ckpt'}
+               'weight_path': '/teamspace/studios/this_studio/PracticalML_2024/runs/cap_svt_charades_s224_f8_exp_32_train_all/epoch=11-step=23952.ckpt'}
 CAP_LM_SETTINGS = {'config_path': 'src/config/cap_lm_charades_s224_f8_exp0.yaml',
                'weight_path': '/teamspace/studios/practicalml-captioning-jnjh/PracticalML_2024/runs/cap_lm_charades_s224_f8_exp_0/epoch=9-step=19970.ckpt'}
 

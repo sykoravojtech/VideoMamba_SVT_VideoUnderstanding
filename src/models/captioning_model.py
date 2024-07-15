@@ -49,3 +49,19 @@ class VideoCaptioningModel(ModelAbstract):
     def generate(self, X: torch.Tensor, max_len: int = 64, beam_size: int = 1) -> str:
         enc_hidden = self.encoder(X)
         return self.head.beam_search(enc_hidden, max_len, beam_size)
+
+class VideoCaptioningModel_VM(VideoCaptioningModel):
+    def __init__(self, config):
+        super().__init__(config)
+        self.mapper = nn.Linear(576, 768)
+    
+    def forward(self, X: torch.Tensor , y: Dict[str, torch.Tensor]) -> torch.Tensor:
+        enc_hidden = self.encoder(X)
+        enc_hidden = self.mapper(enc_hidden)
+        output = self.head(enc_hidden, y)
+        return output.logits
+
+    def generate(self, X: torch.Tensor, max_len: int = 64, beam_size: int = 1) -> str:
+        enc_hidden = self.encoder(X)
+        enc_hidden = self.mapper(enc_hidden)
+        return self.head.beam_search(enc_hidden, max_len, beam_size)
