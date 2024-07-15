@@ -128,7 +128,7 @@ def save_uploaded_file(uploaded_file, name='temp_video.mp4'):
 vm_cls_module = ClsModel(CLS_VM_SETTINGS['config_path'], CLS_VM_SETTINGS['weight_path'])
 svt_cls_module = ClsModel(CLS_SVT_SETTINGS['config_path'], CLS_SVT_SETTINGS['weight_path'])
 svt_cap_module = CapModel(CAP_SVT_SETTINGS['config_path'], CAP_SVT_SETTINGS['weight_path'])
-
+vm_cap_module = CapModel(CAP_VM_SETTINGS['config_path'], CAP_VM_SETTINGS['weight_path'])
 
 def get_model(model_name, cls):
     if model_name == 'Self-supervised Video Transformer':
@@ -140,7 +140,7 @@ def get_model(model_name, cls):
         if cls:
             return vm_cls_module
         else:
-            return NotImplementedError('Mamba cap has not been implemented yet')
+            return vm_cap_module
     raise ValueError(f"Model {model_name} not found")
 
 
