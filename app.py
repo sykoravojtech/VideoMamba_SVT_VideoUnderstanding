@@ -17,11 +17,13 @@ from src.datasets.transformations import get_val_transforms
 DATA_DIR = "data/raw/Charades"
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 CLS_VM_SETTINGS = {'config_path': 'src/config/cls_vm_charades_s224_f8_exp0.yaml',
-               'weight_path': '/teamspace/studios/this_studio/PracticalML_2024/checkpoints/cls_vm_ch_exp7/epoch=142-val_mAP=0.227.ckpt'}
+               'weight_path': 'checkpoints/cls_vm_ch_exp7/epoch=142-val_mAP=0.227.ckpt'}
 CLS_SVT_SETTINGS = {'config_path': 'src/config/cls_svt_charades_s224_f8_exp0.yaml',
-               'weight_path': '/teamspace/studios/this_studio/PracticalML_2024/checkpoints/cls_svt_charades_s224_f8_exp0/epoch=18-val_mAP=0.165.ckpt'}
-CAP_VM_SETTINGS =checkpoints/cls_svt_charades_s224_f8_exp0/epoch=18-val_mAP=0.165.ckpt
-               'weight_path': '/teamspace/studios/this_studio/PracticalML_2024/checkpoints/cap_svt_charades_s224_f8_exp_32_train_all/epoch=11-step=23952.ckpt'}
+               'weight_path': 'checkpoints/cls_svt_charades_s224_f8_exp0/epoch=18-val_mAP=0.165.ckpt'}
+CAP_VM_SETTINGS = {'config_path': 'src/config/cap_vm_charades_s224_f8_exp0.yaml',
+               'weight_path': 'checkpoints/cap_vm_charades_s224_f8_exp0_16_train_all/epoch=14-step=29940.ckpt'}
+CAP_SVT_SETTINGS = {'config_path': 'src/config/cap_svt_charades_s224_f8_exp0.yaml',
+               'weight_path': 'checkpoints/cap_svt_charades_s224_f8_exp_32_train_all/epoch=11-step=23952.ckpt'}
 
 @st.cache_resource()
 def load_action_map():
