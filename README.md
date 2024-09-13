@@ -20,7 +20,7 @@ https://docs.google.com/document/d/1u-LVvFSsDFmDl7H6Y-cFUUbPc1N2QNrFJSKC9aFDCZs/
 
 <div align="center">    
  
-# Title
+# Video Transformers for Classification and Captioning
 </div>
 
 <!-- TABLE OF CONTENTS -->
@@ -45,21 +45,21 @@ https://docs.google.com/document/d/1u-LVvFSsDFmDl7H6Y-cFUUbPc1N2QNrFJSKC9aFDCZs/
 </li> -->
  
 ## Goal of the Project
-goal
+Investigate the application of transformer-based models for video classification and captioning tasks, focusing on the Self-supervised Video Transformer and Video Mamba models.
 
 
 ## Description
-desc
+In this project we investigated the application of transformer-based models for video classification and captioning tasks, focusing on the Self-supervised Video Transformer and Video Mamba models. We explored the effectiveness of these models on a complex dataset, which features intricate human interactions and daily life activities. Our approach involves adapting the pre-trained SVT encoder for downstream tasks while keeping it frozen, allowing us to assess its performance on out-of-distribution datasets. We also developed a specialized data processing pipeline to handle the unique challenges presented by the dataset. By comparing the performance of SVT with Video Mamba, we provide insights into the capabilities of self-supervised models in video understanding tasks. Our research contributes to the field by demonstrating the potential of transformer-based models in handling complex video data which could potentially reduce reliance on large labeled datasets for effective video analysis in the future.
 
 ## Repository structure
 - **assets** (media files for example, display)
-- **data**
-  - **raw** (original downloaded datasets)
-  - **processed** (processed datasets from data/raw)
-- **doc** (LaTeX code for the report)
-  - **fig** (code for generating images and those images used in the LaTeX report)
-- **runs** (experiment log and saved weights)
-- **src** (core modules)
+- **checkpoints** (saved model weights)
+- **data** (datasets)
+- **src**
+    - **config**
+    - **datasets**
+    - **models**
+    - **utils**
 
 
 ## How to run   
@@ -158,9 +158,9 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 ### Citation   
 ```
-@article{id,
-  title={title},
-  author={Vojtěch Sýkora},
+@article{transf_cls_cap,
+  title={Video Transformers for Classification and Captioning},
+  author={Vojtěch Sýkora, Nam Nguyen The, Leon Trochelmann, Swadesh Jana, Eric Nazarenus},
   year={2024}
 }
 ```   
