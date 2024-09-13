@@ -15,6 +15,8 @@ from torchmetrics.functional.text import bleu_score, rouge_score
 parser = argparse.ArgumentParser(description="Train a video model")
 parser.add_argument("--config", help="The config file", 
                         default="src/config/cap_svt_charades_s224_f8_exp0.yaml")
+parser.add_argument("--weight", help="The path to the trained weight .ckpt file", 
+                        default="checkpoints/cap_svt_charades_s224_f8_exp_32_train_all/epoch=11-step=23952.ckpt")
 
 args = parser.parse_args()
 
@@ -35,7 +37,7 @@ set_deterministic(config.SEED)
 # lit_module = create_model(config)
 
 # WEIGHT = sorted(glob.glob('runs/cap_svt_charades_s224_f8_exp0/epoch=*.ckpt'))[-1]
-WEIGHT = "runs/cap_svt_charades_s224_f8_exp0/epoch=7-val_loss=0.520.ckpt"
+WEIGHT = args.weight
 # print(WEIGHT)
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")

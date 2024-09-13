@@ -17,15 +17,11 @@ from src.datasets.transformations import get_val_transforms
 DATA_DIR = "data/raw/Charades"
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 CLS_VM_SETTINGS = {'config_path': 'src/config/cls_vm_charades_s224_f8_exp0.yaml',
-               'weight_path': '/teamspace/studios/this_studio/PracticalML_2024/runs/cls_vm_ch_exp7/epoch=142-val_mAP=0.227.ckpt'}
+               'weight_path': '/teamspace/studios/this_studio/PracticalML_2024/checkpoints/cls_vm_ch_exp7/epoch=142-val_mAP=0.227.ckpt'}
 CLS_SVT_SETTINGS = {'config_path': 'src/config/cls_svt_charades_s224_f8_exp0.yaml',
-               'weight_path': '/teamspace/studios/this_studio/PracticalML_2024/runs/cls_svt_charades_s224_f8_exp0/epoch=18-val_mAP=0.165.ckpt'}
-CAP_VM_SETTINGS = {'config_path': 'src/config/cap_vm_charades_s224_f8_exp0.yaml',
-               'weight_path': '/teamspace/studios/this_studio/PracticalML_2024/runs/cap_vm_charades_s224_f8_exp0_16_train_all/epoch=14-step=29940.ckpt'}
-CAP_SVT_SETTINGS = {'config_path': 'src/config/cap_svt_charades_s224_f8_exp0.yaml',
-               'weight_path': '/teamspace/studios/this_studio/PracticalML_2024/runs/cap_svt_charades_s224_f8_exp_32_train_all/epoch=11-step=23952.ckpt'}
-CAP_LM_SETTINGS = {'config_path': 'src/config/cap_lm_charades_s224_f8_exp0.yaml',
-               'weight_path': '/teamspace/studios/practicalml-captioning-jnjh/PracticalML_2024/runs/cap_lm_charades_s224_f8_exp_0/epoch=9-step=19970.ckpt'}
+               'weight_path': '/teamspace/studios/this_studio/PracticalML_2024/checkpoints/cls_svt_charades_s224_f8_exp0/epoch=18-val_mAP=0.165.ckpt'}
+CAP_VM_SETTINGS =checkpoints/cls_svt_charades_s224_f8_exp0/epoch=18-val_mAP=0.165.ckpt
+               'weight_path': '/teamspace/studios/this_studio/PracticalML_2024/checkpoints/cap_svt_charades_s224_f8_exp_32_train_all/epoch=11-step=23952.ckpt'}
 
 @st.cache_resource()
 def load_action_map():
@@ -134,7 +130,10 @@ class CapModelLinear(ClsModel):
         inp_video_tensors = self.get_input(video_path)
         with torch.no_grad():
             inp_video_tensors = inp_video_tensors.to(DEVICE)
-            model_output = self.lit_module.generate(inp_video_tensors, 128, 3)
+            # bs = inp_video_tensors.shape[0]
+            inp_video_tensors = inp_video_tensors.reshape(-1, 8, 3, 224, 224)
+            model_output = self.lit_module.encoder(inp_video_tensors)
+            model_output = self.lit_module.head.beam_search(model_output.reshape(-1, 12, 768), 128, 3)
         return model_output
 
 
@@ -150,7 +149,6 @@ vm_cls_module = ClsModel(CLS_VM_SETTINGS['config_path'], CLS_VM_SETTINGS['weight
 svt_cls_module = ClsModel(CLS_SVT_SETTINGS['config_path'], CLS_SVT_SETTINGS['weight_path'])
 svt_cap_module = CapModel(CAP_SVT_SETTINGS['config_path'], CAP_SVT_SETTINGS['weight_path'])
 vm_cap_module = CapModel(CAP_VM_SETTINGS['config_path'], CAP_VM_SETTINGS['weight_path'])
-cap_linear_module = CapModelLinear(CAP_LM_SETTINGS['config_path'], CAP_LM_SETTINGS['weight_path'])
 
 def get_model(model_name, cls):
     if model_name == 'Self-supervised Video Transformer':
@@ -190,12 +188,9 @@ def main():
                 text += f"Predicted action: {action_label2text[ind]}. Probability: {model_output[ind]:.2f}\n"
 
             st.text_area(label='Action classification:', value=text, height=200)
-        lin_proj = st.checkbox("Use Linear Projection")
         if st.button("Predict caption"):
-            if not lin_proj:
-                cap_model = get_model(cls_model_name, False)
-            else:
-                cap_model = cap_linear_module
+            cap_model = get_model(cls_model_name, False)
+            
             model_output = cap_model.predict(temp_file)
             st.text("Caption: " + model_output)
 

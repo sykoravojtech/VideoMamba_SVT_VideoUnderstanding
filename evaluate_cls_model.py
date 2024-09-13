@@ -21,9 +21,9 @@ parser = argparse.ArgumentParser(description="Train a video model")
 # parser.add_argument("--config", help="The config file", 
 #                         default="src/config/cls_svt_charades_s224_f8_exp0.yaml")
 parser.add_argument("--config", help="The config file", 
-                        default="src/config/cls_vm_charades_s224_f8_exp0.yaml")
+                        default="src/config/cls_svt_charades_s224_f8_exp0.yaml")
 parser.add_argument("--weight", help="The path to the trained weight .ckpt file", 
-                        default="runs/cls_vm_charades_s224_f8_exp0/epoch=38-val_mAP=0.204.ckpt")
+                        default="checkpoints/cls_svt_charades_s224_f8_exp0/epoch=18-val_mAP=0.165.ckpt")
 
 args = parser.parse_args()
 
