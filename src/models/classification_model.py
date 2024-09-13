@@ -9,10 +9,16 @@ from .model_abstract import ModelAbstract
 from .encoders import create_encoder, EncoderAbstract
 from .heads import create_head, HeadAbstract
 from ..utils.metrics import compute_multilabel_mAP
+from .compute_cls_weights import cls_weights_all_hidden, cls_weights
+
+# CLASS_WEIGHTS = torch.tensor(cls_weights)
+CLASS_WEIGHTS = torch.ones(157)*2
+# print(f"{CLASS_WEIGHTS=}")
 
 class VideoClassificationModel(ModelAbstract):
     def __init__(self, config: CfgNode) -> None:
         super().__init__(config)
+        # self.compute_cls_weights()
 
     def create_encoder(self) -> EncoderAbstract:
         return create_encoder(self.config)
@@ -22,8 +28,11 @@ class VideoClassificationModel(ModelAbstract):
 
     def create_loss_function(self) -> nn.Module:
         loss = self.config.MODEL.LOSS
-        if loss  == 'BCEWithLogitsLoss':
-            return nn.BCEWithLogitsLoss()
+        if loss == 'BCEWithLogitsLoss':
+            class_weights = None
+            if self.config.MODEL.get('USE_CLASS_WEIGHTS', False):
+                class_weights = CLASS_WEIGHTS
+            return nn.BCEWithLogitsLoss(pos_weight=class_weights)
         return nn.CrossEntropyLoss()
             
     def compute_metrics(self, step_outputs: List) -> Dict:
@@ -34,7 +43,6 @@ class VideoClassificationModel(ModelAbstract):
         """
         all_probas = torch.cat([out['preds'].detach().cpu() for out in step_outputs])
         all_labels = torch.cat([out['labels'].detach().cpu() for out in step_outputs])
-        # print('cat shape:', all_probas.shape, all_labels.shape)
 
         if self.config.MODEL.HEAD.MULTI_LABEL:
             all_preds = all_probas.sigmoid().numpy()

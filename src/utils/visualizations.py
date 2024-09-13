@@ -13,7 +13,7 @@ def investigate_video(sample_video, dataset_name, id2label=None):
             print(k, sample_video[k])
     
     if dataset_name == 'charades_action_classification':
-        print(f"Video label: {[id2label[l] for l in sample_video['video_label']]}")
+        print(f"Clip label: {[id2label[l] for l in sample_video['clip_label']]}")
     elif dataset_name == 'charades_caption':
         print(f"Video caption:", sample_video['label_str'])
         # print(f"Video caption (tokenized):",)
@@ -29,7 +29,7 @@ def unnormalize_img(img, mean, std):
     return img.clip(0, 255)
 
 
-def create_gif(video_tensor, filename,  mean, std):
+def create_gif(video_tensor, filename,  mean, std, gif_duration=6):
     """Prepares a GIF from a video tensor.
 
     The video tensor is expected to have the following shape:
@@ -39,13 +39,15 @@ def create_gif(video_tensor, filename,  mean, std):
     for video_frame in video_tensor:
         frame_unnormalized = unnormalize_img(video_frame.permute(1, 2, 0).numpy(), mean, std)
         frames.append(frame_unnormalized)
-    kargs = {"duration": 0.25}
+
+    kargs = {"duration": gif_duration, "fps": 1}
+
     imageio.mimsave(filename, frames, "GIF", **kargs)
     return filename
 
 
-def display_gif(video_tensor, gif_name,  mean, std):
+def display_gif(video_tensor, gif_name,  mean, std, gif_duration=6):
     """Prepares and displays a GIF from a video tensor."""
     video_tensor = video_tensor.permute(1, 0, 2, 3)
-    gif_filename = create_gif(video_tensor, gif_name, mean, std)
+    gif_filename = create_gif(video_tensor, gif_name, mean, std, gif_duration)
     return Image(filename=gif_filename)

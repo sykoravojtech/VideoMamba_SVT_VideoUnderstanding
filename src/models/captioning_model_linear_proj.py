@@ -4,15 +4,17 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 from fvcore.common.config import CfgNode
-
+from torch.optim import AdamW
+from torch.optim.lr_scheduler import CosineAnnealingLR, MultiStepLR
 from .model_abstract import ModelAbstract
 from .encoders import create_encoder, EncoderAbstract
 from .heads import create_head, HeadAbstract
 
-class VideoCaptioningModel(ModelAbstract):
+class VideoCaptioningModelLinear(ModelAbstract):
     def __init__(self, config: CfgNode) -> None:
         super().__init__(config)
-
+        self.visual_mapper = nn.Linear(768, config.MODEL.ENCODER.HIDDEN_SIZE)
+        
     def create_encoder(self) -> EncoderAbstract:
         return create_encoder(self.config)
 
@@ -27,8 +29,9 @@ class VideoCaptioningModel(ModelAbstract):
             Returns:
                 logits: the output logits of the model
         '''
-        enc_hidden = self.encoder(X)
-        output = self.head(enc_hidden, y)
+#        enc_hidden = self.encoder(X)
+        mapped = self.visual_mapper(X)
+        output = self.head(mapped, y)
         return output.logits
 
     def create_loss_function(self) -> nn.Module:
@@ -48,20 +51,21 @@ class VideoCaptioningModel(ModelAbstract):
 
     def generate(self, X: torch.Tensor, max_len: int = 64, beam_size: int = 1) -> str:
         enc_hidden = self.encoder(X)
-        return self.head.beam_search(enc_hidden, max_len, beam_size)
+        mapped = self.visual_mapper(enc_hidden)
+        return self.head.beam_search(mapped, max_len, beam_size)
+        
+    def configure_optimizers(self):
+        optimizer = AdamW(list(self.visual_mapper.parameters()) + list(self.head.parameters()), 
+                        lr=self.config.TRAIN.OPTIM.INIT_LEARNING_RATE, 
+                        eps=self.config.TRAIN.OPTIM.EPS, betas=self.config.TRAIN.OPTIM.BETAS)
 
-class VideoCaptioningModel_VM(VideoCaptioningModel):
-    def __init__(self, config):
-        super().__init__(config)
-        self.mapper = nn.Linear(576, 768)
-    
-    def forward(self, X: torch.Tensor , y: Dict[str, torch.Tensor]) -> torch.Tensor:
-        enc_hidden = self.encoder(X)
-        enc_hidden = self.mapper(enc_hidden)
-        output = self.head(enc_hidden, y)
-        return output.logits
+        lr_scheduler = MultiStepLR(optimizer, milestones=self.config.TRAIN.OPTIM.LR_MILESTONES, gamma=0.1)
 
-    def generate(self, X: torch.Tensor, max_len: int = 64, beam_size: int = 1) -> str:
-        enc_hidden = self.encoder(X)
-        enc_hidden = self.mapper(enc_hidden)
-        return self.head.beam_search(enc_hidden, max_len, beam_size)
+        return {
+            "optimizer": optimizer,
+            "lr_scheduler": {
+                "scheduler": lr_scheduler,
+                "interval": 'epoch', 
+                "frequency": 1, 
+            },
+        }

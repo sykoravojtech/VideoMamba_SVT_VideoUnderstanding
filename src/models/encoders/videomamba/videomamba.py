@@ -224,11 +224,13 @@ class VisionMamba(nn.Module):
             # fc_drop_rate=0., 
             device=None,
             dtype=None,
+            return_hidden=False
         ):
         factory_kwargs = {"device": device, "dtype": dtype} # follow MambaLMHeadModel
         super().__init__()
         self.residual_in_fp32 = residual_in_fp32
         self.fused_add_norm = fused_add_norm
+        self.return_hidden = return_hidden
 
         # pretrain parameters
         self.num_classes = num_classes
@@ -301,7 +303,7 @@ class VisionMamba(nn.Module):
     # def load_pretrained(self, checkpoint_path, prefix=""):
     #     _load_weights(self, checkpoint_path, prefix)
 
-    def forward_features(self, x, inference_params=None):
+    def forward_features(self, x, inference_params=None, return_all_hiddens=False):
         # x shape: B, C, T, H, W -> permute to B,T,C,H,W
         # BATCH_SIZE, NUM_SAMPLED_FRAMES, T, TRAIN_CROP_SIZE, TRAIN_CROP_SIZE
         x = x.permute(0,2,1,3,4)
@@ -351,13 +353,14 @@ class VisionMamba(nn.Module):
             )
 
         # return only cls token
-        return hidden_states[:, 0, :]
-        # return hidden_states
+        if not self.return_hidden:
+            return hidden_states[:, 0, :]
+        else:
+            return hidden_states
 
-    def forward(self, pixel_values, inference_params=None, output_attentions=None,
-             output_hidden_states=None, return_dict=True):
+    def forward(self, pixel_values, inference_params=None, return_all_hiddens=False):
         # BATCH_SIZE, NUM_SAMPLED_FRAMES, C, TRAIN_CROP_SIZE, TRAIN_CROP_SIZE [2,16,3,224,224]
-        x = self.forward_features(pixel_values, inference_params)
+        x = self.forward_features(pixel_values, inference_params, return_all_hiddens)
         return x
 
 

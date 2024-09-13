@@ -11,10 +11,14 @@ MODEL:
     PRETRAINED: checkpoints/kinetics400_vitb_ssl.pth
     HIDDEN_SIZE: 768
     RETURN_ALL_HIDDEN: False
+    NUM_VISUAL_TOKENS: 1
 
   HEAD:
     TYPE: MLP
-    LAYERS: [128,128]
+    REDUCER_TYPE: token_wise # Options: token_wise, hidden_wise. If RETURN_ALL_HIDDEN is False, this is ignored.
+    LAYERS: [1024, 1024]
+    DROPOUT: 0.7  # Optional: Dropout probability
+    LAYER_NORM: False  # Optional: Use layer normalization
     NUM_CLASSES: 157
     MULTI_LABEL: True
     THRESHOLD: 0.5
@@ -22,21 +26,22 @@ MODEL:
   LOSS: BCEWithLogitsLoss
 
 DATA:
+  ENCODING_DIR: data/encodings/cls_svt_charades/ # path to precomputed hidden states from the encoder
   DATASET: charades_action_classification
   ROOT_PATH: data/raw/Charades
-  TRAIN_CSV: Charades_per-frame_annotations_action_cls_train.csv
-  TEST_CSV: Charades_per-frame_annotations_action_cls_test.csv
+  TRAIN_CSV: Charades_per-frame_annotations_fps1.5_action_cls_train.csv
+  TEST_CSV: Charades_per-frame_annotations_fps1.5_action_cls_test.csv
   IMG_SIZE: 224
   NUM_SAMPLED_FRAMES: 8
-  CLIP_DURATION: 30
-  FPS: 24
+  FPS: 1.5
+  CLIP_DURATION: 6 # we want about 8 frames, fps = 1.5 -> set clip duration to 6s
   MEAN: [0.45, 0.45, 0.45]
   STD: [0.225, 0.225, 0.225]
-  NUM_WORKERS: 16
+  NUM_WORKERS: 8
 
 TRAIN:
-  FREEZE_ENCODER: False
-  NUM_EPOCHS: 30
+  FREEZE_ENCODER: True
+  NUM_EPOCHS: 300
   BATCH_SIZE: 8
   OPTIM:
     TYPE: AdamW
@@ -44,7 +49,7 @@ TRAIN:
     MIN_LEARNING_RATE: 0.000001
     EPS: 0.000001
     BETAS: [0.9, 0.999]
-    LR_MILESTONES: [7, 15]
+    LR_MILESTONES: [250, 400]
   LOG_STEPS: 50
   ACCELERATOR: auto
   DEVICES: auto

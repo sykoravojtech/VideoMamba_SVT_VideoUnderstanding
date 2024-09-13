@@ -63,6 +63,7 @@ desc
 
 
 ## How to run   
+### Set-up
 ```bash
 # clone project   
 git clone https://github.com/sykoravojtech/PracticalML_2024.git
@@ -80,6 +81,36 @@ cd ..
 # download pretrained weights
 python download_weights.py
 
+
+# This installs cuda & C++ modules causal_conv1d_cuda and selective_scan_cuda. It also downloads 3 model checkpoints to PracticalML_2024/checkpoints/videomamba.
+chmod +x ./src/models/encoders/videomamba/setup.sh
+./src/models/encoders/videomamba/setup.sh
+
+```
+
+### Play with the UI app
+```bash
+streamlit run --server.port 8503 app.py
+```
+
+### Models evaluation
+```bash
+# 1. Evaluation of multi-action classification on Charades dataset (SVT)
+python evaluate_cls_model.py --config src/config/cls_svt_charades_s224_f8_exp0.yaml --weight checkpoint
+s/cls_svt_charades_s224_f8_exp0/epoch=18-val_mAP=0.165.ckpt
+
+# 2. Evaluation of multi-action classification on Charades dataset (VideoMamba)
+python evaluate_cls_model.py --config src/config/cls_vm_charades_s224_f8_exp0.yaml --weight checkpoints/cls_vm_ch_exp7/epoch=142-val_mAP=0.227.ckpt
+
+# 3. Evaluation of captioning on Charades dataset (SVT)
+python evaluate_cap_model.py --config src/config/cap_svt_charades_s224_f8_exp0.yaml --weight checkpoints/cap_svt_charades_s224_f8_exp_32_train_all/epoch=11-step=23952.ckpt
+
+# 4. Evaluation of captioning on Charades dataset (VideoMamba)
+python evaluate_cap_model.py --config src/config/cap_vm_charades_s224_f8_exp0.yaml --weight checkpoints/cap_vm_charades_s224_f8_exp0_16_train_all/epoch=14-step=29940.ckpt
+```
+
+### Training
+```bash
 # download data
 python download_data.py -ucf
 python download_data.py -charades
@@ -100,20 +131,26 @@ python visualize_dataset.py --config src/config/cls_svt_charades_s224_f8_exp0.ya
 # visualize 1 sample of Charades captioning dataset
 python visualize_dataset.py --config src/config/cap_svt_charades_s224_f8_exp0.yaml
 
-# This installs cuda & C++ modules causal_conv1d_cuda and selective_scan_cuda. It also downloads 3 model checkpoints to PracticalML_2024/checkpoints/videomamba.
-chmod +x ./src/models/encoders/videomamba/setup.sh
-./src/models/encoders/videomamba/setup.sh
 
 # training demo on UCF101 dataset
 python train.py
 
 # training multi-action classification on Charades dataset
 python train.py --config src/config/cls_svt_charades_s224_f8_exp0.yaml
+# head-only finetuning
+python create_encoding.py --config src/config/cls_svt_charades_s224_f8_exp0.yaml
+python train_cls_head.py --config src/config/cls_svt_charades_s224_f8_exp0.yaml
+
 
 # training captioning on Charades dataset
 python train.py --config src/config/cap_svt_charades_s224_f8_exp0.yaml
+# head-only finetuning
+python create_encoding.py --config src/config/cls_svt_charades_s224_f8_exp0.yaml
+python train_cap_head.py --config src/config/cap_svt_charades_s224_f8_exp0.yaml
 ```
+
 Visualize training log at https://wandb.ai/PracticalML2024/PracticalML
+
 
 ## License
 Distributed under the MIT License. See `LICENSE` for more information.

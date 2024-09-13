@@ -62,6 +62,8 @@ class CustomCharadesForCaptioning(Charades):
             video_path_prefix (str): prefix path to add to all paths from data_path.
 
             frames_per_clip (Optional[int]): The number of frames per clip to sample.
+            tokenizer (transformers.Tokenizer): a tokenizer to encode text into list of tokens
+            max_tokens (int): max number of tokens, truncate if exceeds
         """
 
         torch._C._log_api_usage_once("PYTORCHVIDEO.dataset.Charades.__init__")
@@ -203,6 +205,114 @@ class CustomCharadesForCaptioning(Charades):
         # video_labels = [list(set(itertools.chain(*label_list))) for label_list in labels]
         return image_paths, labels, labels
 
+class CustomCharadesForActionClassification(Charades):
+    def __init__(self,
+        data_path: str,
+        clip_sampler: ClipSampler,
+        video_sampler: Type[torch.utils.data.Sampler] = torch.utils.data.RandomSampler,
+        transform: Optional[Callable[[dict], Any]] = None,
+        video_path_prefix: str = "",
+        frames_per_clip: Optional[int] = None,
+        fps:float=1.5) -> None:
+        """
+        Args:
+            data_path (str): Path to the data file. This file must be a space
+                separated csv with the format: (original_vido_id video_id frame_id
+                path_labels)
+
+            clip_sampler (ClipSampler): Defines how clips should be sampled from each
+                video. See the clip sampling documentation for more information.
+
+            video_sampler (Type[torch.utils.data.Sampler]): Sampler for the internal
+                video container. This defines the order videos are decoded and,
+                if necessary, the distributed split.
+
+            transform (Optional[Callable]): This callable is evaluated on the clip output before
+                the clip is returned. It can be used for user defined preprocessing and
+                augmentations on the clips. The clip output format is described in __next__().
+
+            video_path_prefix (str): prefix path to add to all paths from data_path.
+
+            frames_per_clip (Optional[int]): The number of frames per clip to sample.
+            fps: video's frame per second
+        """
+
+        super().__init__(data_path,
+                        clip_sampler,
+                        video_sampler,
+                        transform,
+                        video_path_prefix,
+                        frames_per_clip)
+        self.fps = fps
+
+    def __next__(self) -> dict:
+        """
+        Retrieves the next clip based on the clip sampling strategy and video sampler.
+
+        Returns:
+            A dictionary with the following format.
+
+            .. code-block:: text
+
+                {
+                    'video': <video_tensor>,
+                    'label': <index_label>,
+                    'video_label': <index_label>
+                    'video_index': <video_index>,
+                    'clip_index': <clip_index>,
+                    'aug_index': <aug_index>,
+                }
+        """
+        if not self._video_sampler_iter:
+            # Setup MultiProcessSampler here - after PyTorch DataLoader workers are spawned.
+            self._video_sampler_iter = iter(MultiProcessSampler(self._video_sampler))
+
+        if self._loaded_video:
+            video, video_index = self._loaded_video
+        else:
+            video_index = next(self._video_sampler_iter)
+            path_to_video_frames = self._path_to_videos[video_index]
+            video = FrameVideo.from_frame_paths(path_to_video_frames, fps=self.fps)
+            self._loaded_video = (video, video_index)
+
+        clip_start, clip_end, clip_index, aug_index, is_last_clip = self._clip_sampler(
+            self._next_clip_start_time, video.duration, {}
+        )
+        # Only load the clip once and reuse previously stored clip if there are multiple
+        # views for augmentations to perform on the same clip.
+        if aug_index == 0:
+            self._loaded_clip = video.get_clip(clip_start, clip_end, self._frame_filter)
+
+        frames, frame_indices = (
+            self._loaded_clip["video"],
+            self._loaded_clip["frame_indices"],
+        )
+        self._next_clip_start_time = clip_end
+
+        if is_last_clip:
+            self._loaded_video = None
+            self._next_clip_start_time = 0.0
+
+        # Merge unique labels from each frame into clip label.
+        labels_by_frame = [
+            self._labels[video_index][i]
+            for i in range(min(frame_indices), max(frame_indices) + 1)
+        ]
+        clip_label = list(set(itertools.chain.from_iterable(labels_by_frame)))
+        sample_dict = {
+            "video": frames,
+            "label": labels_by_frame,
+            "clip_label": clip_label,
+            "video_label": self._video_labels[video_index],
+            "video_name": str(video_index),
+            "video_index": video_index,
+            "clip_index": clip_index,
+            "aug_index": aug_index,
+        }
+        if self._transform is not None:
+            sample_dict = self._transform(sample_dict)
+
+        return sample_dict
 
 class CharadesCaptionDataset(DatasetAbstract):
     def __init__(self, config: CfgNode) -> None:
@@ -253,23 +363,26 @@ class CharadesActionClassification(DatasetAbstract):
         self.id2label = self.label_map.set_index('label')['action'].to_dict()
 
         self.clip_duration = config.DATA.CLIP_DURATION
+        self.fps = config.DATA.FPS
 
         self.train_transforms = get_train_transforms(config)
         self.val_transforms = get_val_transforms(config)
 
     def get_train_dataset(self) -> Dataset:
-        train_dataset = pytorchvideo.data.Charades(
+        train_dataset = CustomCharadesForActionClassification(
             data_path=str(self.train_csv_path),
             clip_sampler=pytorchvideo.data.make_clip_sampler("uniform", self.clip_duration),
             transform=self.train_transforms,
+            fps=self.fps
         )
         return train_dataset
 
     def get_val_dataset(self) -> Dataset:
-        val_dataset = pytorchvideo.data.Charades(
+        val_dataset = CustomCharadesForActionClassification(
             data_path=str(self.test_csv_path),
             clip_sampler=pytorchvideo.data.make_clip_sampler("uniform", self.clip_duration),
             transform=self.val_transforms,
+            fps=self.fps
         )
         return val_dataset
 

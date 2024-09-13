@@ -3,6 +3,7 @@ import os
 import pandas as pd
 import numpy as np
 from tqdm.auto import tqdm
+from collections import defaultdict
 
 """
 This script takes charades video annotations from ../Charades/Charades_v1_{train/test}.csv 
@@ -14,10 +15,15 @@ annotations with per-frame video labels. The resulting annotations are stored in
 PATH_TO_CHARADES_ROOT = "./data/raw/Charades/"
 PATH_TO_FRAME_DATA = f"./data/raw/Charades_frames/Charades_v1_rgb/"
 
+FPS = 24
+
 DUMMY_1 = -1  # placeholder for video_id, unused in the implementation
 DUMMY_2 = -1  # placeholder for frame_id, unused in the implementation
 
-TARGET_NUM_FRAMES_PER_VIDEO = 16
+FRAME_SAMPLING_RATE = 16 # out of FRAME_SAMPLING_RATE frames, keep 1 frame
+FINAL_FPS = np.round(FPS / FRAME_SAMPLING_RATE, 3)
+print('Target FPS after sampling:',FINAL_FPS )
+
 SAMPLES = None # Sampling some videos for demo training
 
 # Create the action labels csv file: convert action codes to integer labels.
@@ -55,15 +61,23 @@ def get_frame_ids(vid_id, path_to_frame_data):
     return [os.path.splitext(f)[0] for f in os.listdir(video_path)
             if os.path.isfile(os.path.join(video_path, f))]
 
-def get_label(str_labels):
-    '''Convert a sequence of (start time, end time, action id) to a sequence of integer labels.'''
-    int_labels = []
+def get_labels(str_labels):
+    '''Convert a sequence of (start time, end time, action id) to a sequence of integer labels,
+        mapping by frame id'''
+    label_dicts = defaultdict(list[int])
+
     if pd.isnull(str_labels):
-        return ''
+        return label_dicts
+
     for item in str_labels.split(';'):
-        action_id = item.split(' ')[0]
-        int_labels.append(str(ACTION_ID_TO_LABEL[action_id]))
-    return "," .join(int_labels)
+        action_id, start_time, end_time = item.split(' ')
+        action_int = ACTION_ID_TO_LABEL[action_id]
+        start_frame = int(float(start_time) * FPS)
+        end_frame = int(float(end_time) * FPS)
+        for fid in range(start_frame, end_frame+1):
+            label_dicts[fid].append(str(action_int))
+
+    return label_dicts
 
 def create_frame_anns(vid_anns, path_to_frame_data):
     """Returns annotations with the desired frame paths,
@@ -73,19 +87,16 @@ def create_frame_anns(vid_anns, path_to_frame_data):
     for vid_count, anns_row in tqdm(vid_anns.iterrows(), total=len(vid_anns)):
         vid_id = anns_row['id']
         frm_ids = get_frame_ids(vid_id, path_to_frame_data)
-        vid_labels = get_label(anns_row['actions']) if pd.notnull(anns_row['actions']) else ''
+        cls_labels = get_labels(anns_row['actions'])
         caption = anns_row['script']
 
-        stride = int(len(frm_ids) / TARGET_NUM_FRAMES_PER_VIDEO)
-        if stride == 0:
-            stride = 1
-            print(f'Video {vid_id} only has {len(frm_ids)} frames')
-        
         for _id, frm_id in enumerate(frm_ids):
-            if _id % stride != 0:
+            if _id % FRAME_SAMPLING_RATE != 0:
                 continue
+            # print(_id)
             frm_path = os.path.join(path_to_frame_data, vid_id, f"{frm_id}.jpg")
-            frm_cls_anns.append((vid_id, DUMMY_1, DUMMY_2, frm_path, vid_labels))
+            joined_cls_labels = ",".join(cls_labels[_id])
+            frm_cls_anns.append((vid_id, DUMMY_1, DUMMY_2, frm_path, joined_cls_labels))
             frm_cap_anns.append((vid_id, DUMMY_1, DUMMY_2, frm_path, caption))
 
         if SAMPLES:
@@ -154,8 +165,8 @@ for phase in ['train', 'test']:
 
     print("Saving annotations to csv...")
     if not SAMPLES:
-        frame_cls_anns_df.to_csv(f'{PATH_TO_CHARADES_ROOT}/Charades_per-frame_annotations_action_cls_{phase}.csv', sep=' ', index=False)
-        frame_cap_anns_df.to_csv(f'{PATH_TO_CHARADES_ROOT}/Charades_per-frame_annotations_captioning_{phase}.csv', sep=' ', index=False)
+        frame_cls_anns_df.to_csv(f'{PATH_TO_CHARADES_ROOT}/Charades_per-frame_annotations_fps{FINAL_FPS}_action_cls_{phase}.csv', sep=' ', index=False)
+        frame_cap_anns_df.to_csv(f'{PATH_TO_CHARADES_ROOT}/Charades_per-frame_annotations_fps{FINAL_FPS}_captioning_{phase}.csv', sep=' ', index=False)
     else:
-        frame_cls_anns_df.to_csv(f'{PATH_TO_CHARADES_ROOT}/Charades_per-frame_annotations_action_cls_{phase}_samples.csv', sep=' ', index=False)
-        frame_cap_anns_df.to_csv(f'{PATH_TO_CHARADES_ROOT}/Charades_per-frame_annotations_captioning_{phase}_samples.csv', sep=' ', index=False)
+        frame_cls_anns_df.to_csv(f'{PATH_TO_CHARADES_ROOT}/Charades_per-frame_annotations_fps{FINAL_FPS}_action_cls_{phase}_samples.csv', sep=' ', index=False)
+        frame_cap_anns_df.to_csv(f'{PATH_TO_CHARADES_ROOT}/Charades_per-frame_annotations_fps{FINAL_FPS}_captioning_{phase}_samples.csv', sep=' ', index=False)

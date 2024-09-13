@@ -1,5 +1,5 @@
 PROJECT_NAME: PracticalML
-EXPERIMENT: cap_svt_charades_s224_f8_exp_32_train
+EXPERIMENT: cap_lm_charades_s224_f8_exp0
 OUTPUT_DIR: ./runs
 WANDB_KEY: 547d969d74fa2db0a0eb6a8b49490f5fddccfc04
 SEED: 42
@@ -27,7 +27,7 @@ DATA:
   TEST_CSV: Charades_per-frame_annotations_fps1.5_captioning_test.csv
   IMG_SIZE: 224
   NUM_SAMPLED_FRAMES: 8
-  NUM_SAMPLED_FRAMES_MULT: 4
+  NUM_SAMPLED_FRAMES_MULT: 12
   CLIP_DURATION: 30
   MEAN: [0.45, 0.45, 0.45]
   STD: [0.225, 0.225, 0.225]

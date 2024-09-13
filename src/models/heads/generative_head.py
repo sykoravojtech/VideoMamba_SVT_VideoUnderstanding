@@ -15,12 +15,13 @@ class GenerativeHead(HeadAbstract):
         model_name = self.config.MODEL.HEAD.LANGUAGE_MODEL
         lm_config = AutoConfig.from_pretrained(model_name, add_cross_attention=True)
         self.language_model = AutoModelForCausalLM.from_pretrained(model_name, config=lm_config)
+        # self.language_model = AutoModelForCausalLM.from_config(lm_config)
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.tokenizer.pad_token = self.tokenizer.eos_token
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def forward(self, enc_hidden: torch.Tensor, y: Dict[str, torch.Tensor]) -> torch.Tensor:
-        enc_hidden = enc_hidden.unsqueeze(1) # make shape (bs x 1 x hidden_size)
+        # enc_hidden = enc_hidden.unsqueeze(1) # make shape (bs x 1 x hidden_size)
         output = self.language_model(input_ids=y['input_ids'],
                                    encoder_hidden_states=enc_hidden,
                                    attention_mask=y['attention_mask'])
@@ -34,14 +35,12 @@ class GenerativeHead(HeadAbstract):
         end-to-end confidence score. Repeat this process until at most 'max_len' tokens
         have been generated.
         """
-        encoder_hidden_states = encoder_hidden_states.reshape(1, 1, -1).to(self.device)
+        # encoder_hidden_states = encoder_hidden_states.reshape(1, 1, -1).to(self.device)
         # Since we haven't performed any beam search steps yet, we just have one
         # set of input IDs (with a single "start" token). We use 'None' for the log
         # probability of this sequence, since it's not being predicted by the model.
         input_ids = [torch.tensor([self.tokenizer.bos_token_id], device=self.device)]
         beam_logprobs: Optional[List[float]] = None
-
-        print(input_ids)
 
         def _get_beam_outputs(_input_ids: torch.Tensor) -> Tuple[List[torch.Tensor], torch.Tensor]:
             """Performs inference on the 'input_ids' Tensor, and collects the top
