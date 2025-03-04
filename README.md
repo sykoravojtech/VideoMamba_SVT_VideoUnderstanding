@@ -66,10 +66,10 @@ In this project we investigated the application of transformer-based models for 
 ### Set-up
 ```bash
 # clone project   
-git clone https://github.com/sykoravojtech/PracticalML_2024.git
+git clone https://github.com/sykoravojtech/VideoMamba_SVT_VideoUnderstanding.git
 
 # install dependencies   
-cd PracticalML_2024
+cd VideoMamba_SVT_VideoUnderstanding
 pip install -r requirements.txt
 
 # install pytorchvideo
