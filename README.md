@@ -51,6 +51,8 @@ Investigate the application of transformer-based models for video classification
 ## Description
 In this project we investigated the application of transformer-based models for video classification and captioning tasks, focusing on the Self-supervised Video Transformer and Video Mamba models. We explored the effectiveness of these models on a complex dataset, which features intricate human interactions and daily life activities. Our approach involves adapting the pre-trained SVT encoder for downstream tasks while keeping it frozen, allowing us to assess its performance on out-of-distribution datasets. We also developed a specialized data processing pipeline to handle the unique challenges presented by the dataset. By comparing the performance of SVT with Video Mamba, we provide insights into the capabilities of self-supervised models in video understanding tasks. Our research contributes to the field by demonstrating the potential of transformer-based models in handling complex video data which could potentially reduce reliance on large labeled datasets for effective video analysis in the future.
 
+For more check the [Paper](doc/ML_Practical_LENSV7.pdf) and [Presentation](doc/presentation.pdf)
+
 ## Repository structure
 - **assets** (media files for example, display)
 - **checkpoints** (saved model weights)
